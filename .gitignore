@@ -1,0 +1,118 @@
+# --------------------------------------------
+# Build & Gradle (Spring Boot)
+# --------------------------------------------
+build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# --------------------------------------------
+# IDE
+# --------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.vscode/
+*.code-workspace
+
+# --------------------------------------------
+# OS
+# --------------------------------------------
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --------------------------------------------
+# Logs & Temp
+# --------------------------------------------
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# --------------------------------------------
+# 비밀정보·로컬 설정 (RULE 1.1)
+# --------------------------------------------
+.env
+.env.*
+!.env.example
+*.local.yml
+application-local.yml
+application-local.yaml
+**/secrets/
+**/*.pem
+**/*.key
+!**/*.pub
+
+# --------------------------------------------
+# Spring Boot / Java
+# --------------------------------------------
+HELP.md
+target/
+.recommenders/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# --------------------------------------------
+# Flutter / Dart (mobile/)
+# --------------------------------------------
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/**/build/
+mobile/**/.dart_tool/
+mobile/*.iml
+# Flutter iOS
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+# Flutter Android
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/**/gradle-wrapper.jar
+mobile/android/captures/
+mobile/android/.cxx/
+# Flutter Web
+mobile/web/.dart_tool/
+
+# --------------------------------------------
+# Test / Report
+# --------------------------------------------
+.jacoco/
+coverage/
+*.lcov
+test-output/
+report/
+reports/
+
+# --------------------------------------------
+# 기타
+# --------------------------------------------
+*.bak
+*.orig
