@@ -1,7 +1,6 @@
 package com.example.sns.exception;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +16,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
-/*
+/**
  * 전역 예외 처리기.
- * RULE 2.2.3: 모든 예외는 GlobalExceptionHandler에서 일관된 ErrorResponse로 변환.
- * RULE 1.4.1, 2.2.2: 스택 트레이스·내부 경로 사용자 반환 금지.
- * RULE 7.1.2: 공통된 객체 형식으로 반환.
+ *
+ * 모든 예외를 일관된 ErrorResponse로 변환 (RULE 2.2.3).
+ * 스택 트레이스 사용자 반환 금지 (RULE 1.4.1).
+ * SLF4J 파라미터화 로깅 사용 (RULE 1.4.3).
  */
 @Slf4j
 @RestControllerAdvice
@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
                         .value(err.getRejectedValue() != null ? err.getRejectedValue().toString() : null)
                         .reason(err.getDefaultMessage())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
         log.warn("Validation failed: {}", fieldErrors);
         ErrorResponse response = ErrorResponse.of(ErrorCode.VALIDATION_ERROR, fieldErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -56,7 +56,7 @@ public class GlobalExceptionHandler {
                         .value(err.getRejectedValue() != null ? err.getRejectedValue().toString() : null)
                         .reason(err.getDefaultMessage())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
         log.warn("Bind validation failed: {}", fieldErrors);
         ErrorResponse response = ErrorResponse.of(ErrorCode.VALIDATION_ERROR, fieldErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
                         .value(v.getInvalidValue() != null ? v.getInvalidValue().toString() : null)
                         .reason(v.getMessage())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
         log.warn("Constraint violation: {}", fieldErrors);
         ErrorResponse response = ErrorResponse.of(ErrorCode.VALIDATION_ERROR, fieldErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);

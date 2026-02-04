@@ -16,12 +16,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Access Log AOP.
- * RULE 3.5.1: 횡단 관심사(로깅) 전용.
- * RULE 3.5.2: 제거해도 시스템 정상 동작 (보조 역할).
- * RULE 3.5.3: Annotation 기반 Pointcut.
- * RULE 3.5.6: 상태 변경 금지, 관찰자 역할만.
- * RULE 3.5.7: @Order 명시.
+ * Access Log AOP — API 접근 로그 기록.
+ *
+ * @LogAccess 적용 메서드의 URI, 소요 시간을 로깅한다.
+ *            횡단 관심사 전용, 제거해도 시스템 정상 동작 (RULE 3.5.1, 3.5.2).
+ *            SLF4J 파라미터화 로깅 사용 (RULE 1.4.3).
+ *
+ * @see LogAccess
  */
 @Slf4j
 @Aspect
@@ -30,10 +31,18 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AccessLogAspect {
 
+    /** @LogAccess 어노테이션이 붙은 메서드 대상 */
     @Pointcut("@annotation(com.example.sns.aop.LogAccess)")
     public void logAccessPointcut() {
     }
 
+    /**
+     * 접근 로그 기록 후 원본 실행. 예외 시 로깅 후 재throw (RULE 3.5.4).
+     *
+     * @param joinPoint 대상 메서드
+     * @return 원본 메서드 반환값
+     * @throws Throwable 원본 메서드 예외 (로깅 후 그대로 전파)
+     */
     @Around("logAccessPointcut()")
     public Object logAccess(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();

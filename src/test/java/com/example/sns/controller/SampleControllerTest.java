@@ -12,6 +12,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+/**
+ * SampleController 통합 테스트.
+ *
+ * @Valid 검증 및 GlobalExceptionHandler 동작 검증.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 class SampleControllerTest {

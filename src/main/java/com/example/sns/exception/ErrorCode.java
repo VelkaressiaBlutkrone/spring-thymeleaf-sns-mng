@@ -4,12 +4,11 @@ import org.springframework.http.HttpStatus;
 
 /**
  * 공통 에러 코드 정의.
- * RULE 2.2.3: 비즈니스 로직 예외는 반드시 ErrorCode enum 사용.
- * RULE 2.2.5: 코드/HTTP 상태/메시지 필수 지정.
+ *
+ * 비즈니스 로직 예외는 반드시 ErrorCode enum 사용 (RULE 2.2.3).
  */
 public enum ErrorCode {
 
-    // 공통
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "E001", "잘못된 요청입니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E002", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "E003", "접근 권한이 없습니다."),

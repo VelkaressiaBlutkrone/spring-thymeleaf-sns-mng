@@ -56,6 +56,14 @@
 
 **RULE 3.5.2**: AOP 제거해도 시스템이 정상 동작해야 한다.
 
+## 로깅 규칙 (RULE 1.4.3)
+
+- **SLF4J** `@Slf4j` 또는 `LoggerFactory.getLogger(Class)` 사용
+- **파라미터화 로깅** `{}` placeholder 사용, 문자열 concat 금지
+- **로그 레벨**: ERROR(예외·실패), WARN(비정상·재시도), INFO(주요 이벤트), DEBUG(개발용)
+- **금지 (1.4.3.7)**: PII·토큰·비밀번호 로그 출력, `System.out`/`System.err`, 예외 catch 후 로그 없이 진행
+- **모니터링 (1.4.3.8)**: ERROR 이상 즉시 알림, WARN 누적 주간 리포트
+
 ## 사용 방법
 
 ### Access Log 적용

@@ -9,8 +9,8 @@ import lombok.Getter;
 
 /**
  * API 에러 응답 DTO.
- * RULE 2.2.3: GlobalExceptionHandler에서 일관된 ErrorResponse로 변환.
- * RULE 1.4.1: 스택 트레이스·내부 경로 사용자 반환 금지.
+ *
+ * GlobalExceptionHandler에서 일관된 형식으로 반환 (RULE 2.2.3).
  */
 @Getter
 @Builder

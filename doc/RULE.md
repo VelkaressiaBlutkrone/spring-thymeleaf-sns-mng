@@ -83,6 +83,96 @@
 - 민감 작업(비밀번호 변경, 역할 변경 등) 감사 로그
 - 로그 위변조 방지(무결성 검증 고려)
 
+#### 1.4.3 로깅 기술 규칙 (SLF4J / Logback)
+
+> Spring Boot 기본: SLF4J + Logback. [로그 레벨 결정 흐름](https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels) 참고.
+
+##### 1.4.3.1 Logger 사용
+
+- **SLF4J** 사용 (`org.slf4j.Logger`)
+- `LoggerFactory.getLogger(MyClass.class)` 또는 Lombok `@Slf4j`
+- `static final` Logger 선언 (재생성 방지)
+
+##### 1.4.3.2 파라미터화 로깅 (Parameterized Logging)
+
+- **`{}` placeholder** 사용, 문자열 concat 금지
+- 이유: 로그 레벨 비활성화 시 불필요한 문자열 연산 방지
+
+```java
+// ✅ 권장
+log.info("요청 처리: userId={}, action={}", userId, action);
+
+// ❌ 금지
+log.info("요청 처리: userId=" + userId + ", action=" + action);
+```
+
+##### 1.4.3.3 로그 레벨 정의 및 사용 기준
+
+| 레벨 | 심각도 | 사용 시점 | local/dev | prod |
+|------|--------|-----------|-----------|------|
+| TRACE | 최저 | 매우 상세 내부 추적 (거의 사용 금지) | OFF | OFF |
+| DEBUG | 낮음 | 개발/테스트용 상세 정보 (SQL 바인딩, 객체 상태) | DEBUG | OFF |
+| INFO | 보통 | 서버 기동/종료, 주요 비즈니스 이벤트 성공 | INFO | INFO |
+| WARN | 높음 | 비정상이지만 계속 진행 가능 (재시도, 대체 경로) | INFO | WARN |
+| ERROR | 매우 높음 | 요청/기능 실패, 시스템 전체는 동작 | INFO | ERROR |
+
+- **개발/로컬**: DEBUG 이상 기본 출력
+- **운영**: INFO 이상 기본 출력, WARN/ERROR는 모니터링 대상
+- 운영 중 일시 디버깅: 특정 패키지만 DEBUG로 동적 변경 (Actuator 등)
+
+##### 1.4.3.4 로그 구성 문법 및 구조화 (Structured Logging)
+
+- **JSON 형식** 권장 (ELK, Loki, CloudWatch 파싱 용이)
+- **MDC** 활용: `requestId`, `userId`, `traceId` 등 요청 추적 필드 포함
+- 예외 시 `exception` 필드에 stacktrace (운영에서는 3줄 제한 옵션 고려)
+
+```json
+{
+  "timestamp": "2026-02-04T17:38:45.123+09:00",
+  "level": "INFO",
+  "logger": "com.example.service.OrderService",
+  "requestId": "req-abc123",
+  "message": "Order created successfully",
+  "service": "order-api",
+  "env": "prod"
+}
+```
+
+##### 1.4.3.5 로그 파일 저장 및 관리 정책
+
+| 항목 | local/dev | staging | prod |
+|------|-----------|---------|------|
+| 출력 | 콘솔 + 파일 | 콘솔 + 파일 + 중앙 수집 | 파일 + 중앙 수집 |
+| 경로 | `./logs/` | `/app/logs/` | `/var/log/{service}/` |
+| 파일명 | `app.log` | `app-%d{yyyy-MM-dd}.log` | `app-%d{yyyy-MM-dd-HH}.%i.log.gz` |
+| 롤링 | 10MB 또는 일단위 | 일단위 + 50MB | 시간단위(1h) + 100MB |
+| 압축 | 없음 | gzip | gzip |
+| 보관 기간 | 7일 | 30일 | 90일(Hot) + 1년(Cold) |
+| 최대 파일 수 | 10개 | 30개 | 720개(1h×30일) |
+
+- Logback `RollingFileAppender` 또는 `logrotate` 사용
+- 중앙 수집(EFK, Loki 등) 도입 시 파일 보관 3~7일, 나머지는 중앙 저장소 관리
+
+##### 1.4.3.6 환경별 로그 출력 제어
+
+- `application-{profile}.yml` 또는 `logback-spring.xml`로 프로파일별 설정
+- local/dev: `com.example: DEBUG`
+- prod: `root: INFO`, `com.example.repository: WARN` (SQL 로그 최소화)
+
+##### 1.4.3.7 금지 사항 (Do Not)
+
+- ❌ PII, 토큰, 비밀번호, 카드번호 등 민감정보 로그 출력
+- ❌ 무의미한 반복 로그 (매 요청 "health check ok" 등)
+- ❌ 운영 환경 DEBUG/TRACE 기본 활성화
+- ❌ `System.out` / `System.err` 사용
+- ❌ 예외 catch 후 로그 없이 진행
+
+##### 1.4.3.8 모니터링 연계
+
+- ERROR 이상 → 즉시 알림 (Slack, PagerDuty 등)
+- WARN 누적 시 주간 리포트
+- 로그 기반 메트릭(에러율, 응답시간) → Prometheus + Grafana 연동 권장
+
 ### 1.5 인증·통신 보안 (상세)
 
 > 상세 흐름 및 구현 방법: `doc/SECURITY_AUTH.md` 참고
@@ -443,6 +533,54 @@ AOP는 **횡단 관심사(Cross-Cutting Concern)** 전용이며, 비즈니스 �
 - 공개 API → **Swagger/OpenAPI 필수**
 - 설정 값 → README 또는 config 문서화
 - ❌ "코드 보면 안다" 금지
+
+### 4.4 주석 규칙 (v1.0 — 2026.02)
+
+> 주석은 Why를 설명한다. What은 코드로 표현한다.
+
+#### 4.4.1 기본 원칙
+
+- 주석은 **Why(이유)** 를 설명한다. What(무엇)은 코드로 표현한다.
+- **한글 주석**을 기본으로 한다 (영어 허용하나 프로젝트 내 일관성 유지)
+- 주석은 코드와 **동기화**되어야 한다.
+
+#### 4.4.2 문서화 주석 (Javadoc)
+
+- **public API**(클래스, 메서드, 인터페이스) → 필수
+- Javadoc 형식 준수
+- 구조: 한 줄 요약 → 빈 줄 → 상세 설명 → 태그 순서 (`@param` → `@return` → `@throws` → `@example`)
+
+```java
+/**
+ * 회원 이메일로 조회한다.
+ *
+ * @param email 이메일 (unique)
+ * @return 회원 Optional
+ */
+Optional<User> findByEmail(String email);
+```
+
+#### 4.4.3 구현 주석 (Inline / Block)
+
+- **비직관적인 로직**에만 작성
+- `//` 한 줄 주석 선호
+- 블록 주석 `/* */` 사용 시 `*` 정렬 유지
+
+#### 4.4.4 금지 사항
+
+- ❌ 코드와 동일한 내용 반복 (예: `i++` // i를 1 증가시킴)
+- ❌ 주석 박스(`*********`) 사용 금지
+- ❌ 불필요한 주석으로 코드 가독성 저하 금지
+
+#### 4.4.5 언어별 세부 규칙
+
+- **Java/Kotlin** → Google Java Style Guide + Javadoc
+- **JavaScript/TypeScript** → JSDoc + Airbnb 스타일
+- **Python** → PEP 8 + Google Python Style Guide docstring
+
+#### 4.4.6 린팅·검증
+
+- Checkstyle, SpotBugs 등에 주석 규칙 플러그인 적용 예정
 
 ---
 
@@ -849,6 +987,7 @@ ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반�
 | 보안 | 권한 부족 시 403 반환 | ✅ |
 | 보안 | 입력값 검증 적용 | ✅ |
 | 보안 | 로그에 민감정보 미포함 | ✅ |
+| 보안 (로깅) | SLF4J 사용, 파라미터화 로깅 `{}`, 로그 레벨 준수 (RULE 1.4.3) | ✅ |
 | 기능 | HTTP Method 의미 준수 | ✅ |
 | 기능 | 공통 예외 체계 사용 | ✅ |
 | 기능 | 트랜잭션 경계 Service 계층 | ✅ |
@@ -862,6 +1001,7 @@ ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반�
 | 기술 (AOP) | AOP 추가 시 문서화(Pointcut·목적·영향도) | ✅ |
 | 품질 | 핵심 로직 테스트 존재 | ✅ |
 | 품질 | API 문서화 (Swagger) | ✅ |
+| 품질 (주석) | public API Javadoc 필수, 한글 주석 기본 (RULE 4.4) | ✅ |
 | 운영 | 환경별 설정 분리 | ✅ |
 | 운영 | Fallback 전략 정의 | ✅ |
 | Spring Boot | DB 등 민감정보 환경변수 주입 | ✅ |

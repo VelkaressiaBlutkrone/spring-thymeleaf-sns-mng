@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 예외 처리 보조 AOP.
- * RULE 3.5.4: 예외 catch 시 로깅만 하고 반드시 재throw.
- * RULE 3.5.4: 예외 판단·변환·return null 금지.
- * RULE 3.5.7: @Order 명시.
- * RULE 1.4.2: 인증 실패·권한 부족 시도 로깅.
+ * 예외 처리 보조 AOP — Controller 예외 로깅.
+ *
+ * Controller 예외 발생 시 상세 로깅 후 재throw.
+ * 예외 판단·변환 금지, GlobalExceptionHandler가 처리 (RULE 3.5.4).
+ * SLF4J 파라미터화 로깅, ERROR 레벨 사용 (RULE 1.4.3).
  */
 @Slf4j
 @Aspect

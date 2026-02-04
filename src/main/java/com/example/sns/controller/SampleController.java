@@ -16,9 +16,10 @@ import com.example.sns.exception.ErrorCode;
 import jakarta.validation.Valid;
 
 /**
- * @Valid 검증 예시 Controller.
- *        RULE 1.3.1: Controller 단에서 형식 검증(@Valid 등) 적용.
- *        Step 2 완료 후 삭제 가능. 실제 API는 Step 4 이후 구현.
+ * @Valid 검증 및 예외 처리 예시 Controller.
+ *
+ *        Step 2 검증·예외 패턴 시연용.
+ *        접근 로그는 @LogAccess → AccessLogAspect (RULE 1.4.3).
  */
 @RestController
 @RequestMapping("/api/sample")

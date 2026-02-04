@@ -33,9 +33,18 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+# RULE 1.4.3: dev 환경 DEBUG, 파일 보관 30일
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
+    com.example: ${LOG_LEVEL_APP:DEBUG}
+  file:
+    name: ${LOG_FILE_PATH:./logs/app.log}
+  logback:
+    rollingpolicy:
+      max-file-size: 50MB
+      max-history: 30
+      file-name-pattern: ./logs/app-%d{yyyy-MM-dd}.%i.log
 
 management:
   endpoints:

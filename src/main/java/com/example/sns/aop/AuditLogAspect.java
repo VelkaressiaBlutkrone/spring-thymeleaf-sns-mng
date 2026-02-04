@@ -15,12 +15,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Audit Log AOP.
- * RULE 1.4.2: 민감 작업 감사 로그.
- * RULE 3.5.1: 횡단 관심사(감사 로깅) 전용.
- * RULE 3.5.3: Annotation 기반 Pointcut.
- * RULE 3.5.6: 상태 변경 금지.
- * RULE 3.5.7: @Order 명시.
+ * Audit Log AOP — 민감 작업 감사 로그 기록.
+ *
+ * @AuditLog 적용 메서드의 액션·URI·사용자·결과를 로깅한다.
+ *           인증 실패·권한 부족 시도 모니터링 (RULE 1.4.2).
+ *           SLF4J 파라미터화 로깅 사용 (RULE 1.4.3).
+ *
+ * @see AuditLog
  */
 @Slf4j
 @Aspect

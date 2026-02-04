@@ -6,6 +6,23 @@
 
 ---
 
+## 주석 규칙 (RULE 4.4)
+
+- 모든 Step 산출물은 **RULE 4.4(주석 규칙)** 준수
+- public API → Javadoc 필수 (한 줄 요약 → 상세 → @param/@return/@throws)
+- 주석은 **한글** 기본, Why(이유) 설명, 코드와 동기화
+
+---
+
+## 로깅 규칙 (RULE 1.4.3)
+
+- 로깅이 필요한 Step은 **RULE 1.4.3(로깅 기술 규칙)** 준수
+- SLF4J `@Slf4j` 또는 `LoggerFactory` 사용, `{}` 파라미터화 로깅, 문자열 concat 금지
+- 로그 레벨: ERROR(예외·실패), WARN(비정상·재시도), INFO(주요 이벤트), DEBUG(개발용)
+- 민감정보(PII, 토큰, 비밀번호) 로그 출력 금지, `System.out`/`System.err` 금지
+
+---
+
 ## Step 템플릿 설명
 
 | 필드 | 설명 |
@@ -60,6 +77,7 @@
 - 전체 시스템 아키텍처 다이어그램 작성(웹/모바일·Backend·DB·Redis·지도 API)
 - ERD 설계: User, Post, ImagePost, Pin, Location, Post↔Pin 연관 관계
 - `application-local.yml`, `application-dev.yml`, `application-prod.yml` 골격 작성(비밀정보는 플레이스홀더 또는 환경 변수 참조만)
+- **로깅 (RULE 1.4.3)**: 환경별 `logging.level`, `logging.file`, `logback.rollingpolicy` 골격 포함
 
 **Output Format:**
 
@@ -78,7 +96,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 1.1, 5.1, 3.1
+**RULE Reference:** 1.1, 5.1, 3.1, 1.4.3(로깅)
 
 ---
 
@@ -111,6 +129,10 @@
   - 다중 Aspect 사용 시 **@Order 명시** (예: Security → Transaction → Logging)
   - AOP 내부에서 **상태 변경·Entity/Request 수정·비즈니스 판단 금지**
   - **AOP 추가 시 문서화**: 적용 대상(Pointcut), 목적, 실행 시점, 예외 처리 정책, 제거 시 영향도 (README 또는 doc/)
+- **로깅 규칙 (RULE 1.4.3)** 적용
+  - SLF4J `@Slf4j` 또는 `LoggerFactory` 사용
+  - 파라미터화 로깅 `{}` placeholder 사용, 문자열 concat 금지
+  - 로그 레벨: ERROR(예외), WARN(비정상), INFO(주요 이벤트), DEBUG(개발용)
 
 **Output Format:**
 
@@ -131,7 +153,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 2.2, 1.6, **3.5**
+**RULE Reference:** 2.2, 1.6, **3.5**, **1.4.3(로깅)**, 4.4(주석)
 
 ---
 
@@ -175,7 +197,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 3.1, 3.3, **3.5.5**
+**RULE Reference:** 3.1, 3.3, **3.5.5**, 4.4(주석), 1.4.3(로깅)
 
 ---
 
@@ -201,6 +223,7 @@
 - 세션·쿠키 기반 인증 흐름 정리(Redis 저장 전제)
 - OAuth2 확장 시 필요한 확장 포인트(엔드포인트·역할) 정리
 - SpringDoc/Swagger 설정으로 API 문서 골격 노출
+- **로깅 (RULE 1.4.3)**: Swagger/Actuator 접근 등 공개 엔드포인트에 무의미한 반복 로그 금지
 
 **Output Format:**
 
@@ -218,7 +241,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 2.1, 4.3
+**RULE Reference:** 2.1, 4.3, 1.4.3(로깅)
 
 ---
 
@@ -242,6 +265,7 @@
 - Redis 연결 설정(호스트·포트·비밀번호는 환경 변수)
 - Spring Session Redis 설정으로 HTTP 세션 저장소를 Redis로 이전
 - (선택) 위치 기반 캐시용 키 네이밍·TTL 정책 문서화
+- **로깅 (RULE 1.4.3)**: Redis 연결·세션 저장 성공/실패 시 파라미터화 로깅, 비밀정보 제외
 
 **Output Format:**
 
@@ -259,7 +283,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 2.4, 1.1
+**RULE Reference:** 2.4, 1.1, 1.4.3(로깅)
 
 ---
 
@@ -283,6 +307,7 @@
 - 회원가입 API: 이메일·비밀번호 등 필드 검증(@Valid), BCrypt/Argon2id 해싱, 중복 이메일 시 4xx·ErrorCode 반환
 - 로그인 API: 인증 성공 시 세션 생성(Redis), 실패 시 401
 - DTO·Service·Controller 계층 분리, 트랜잭션은 Service 계층
+- **로깅 (RULE 1.4.2, 1.4.3)**: 인증 실패·권한 부족 시도 로깅, 민감 작업(가입·로그인 성공) 감사 로그, 비밀번호·토큰 로그 출력 금지
 
 **Output Format:**
 
@@ -299,7 +324,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 1.1, 1.2, 1.3
+**RULE Reference:** 1.1, 1.2, 1.3, 1.4.2, 1.4.3(로깅)
 
 ---
 
@@ -324,6 +349,7 @@
 - 로그인 사용자에게 ROLE_USER, 관리자 계정에 ROLE_ADMIN 부여
 - /admin/** 은 ROLE_ADMIN만 접근 허용, 미인가 시 403
 - CORS: 허용 오리진을 allow-list로 제한(* 금지)
+- **로깅 (RULE 1.4.2, 1.4.3)**: 인가 실패(403) 시도 로깅, 파라미터화 로깅 사용
 
 **Output Format:**
 
@@ -341,7 +367,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 1.2, **3.5**
+**RULE Reference:** 1.2, **3.5**, 1.4.2, 1.4.3(로깅)
 
 ---
 
@@ -366,6 +392,7 @@
 - POST/PUT/DELETE: 로그인 필수, 수정·삭제 시 작성자 소유권 검증(IDOR 방지)
 - 작성 시 제목·내용·작성 위치(위도·경도 선택) 저장
 - 트랜잭션 경계는 Service, 읽기 전용 조회는 readOnly
+- **로깅 (RULE 1.4.3)**: 주요 CRUD·소유권 검증 실패(IDOR) 시 파라미터화 로깅
 
 **Output Format:**
 
@@ -383,7 +410,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 2.1, 2.3, 1.2, **3.5.5**
+**RULE Reference:** 2.1, 2.3, 1.2, **3.5.5**, 1.4.3(로깅)
 
 ---
 
@@ -407,6 +434,7 @@
 - 이미지 업로드: 허용 MIME·최대 크기 제한, 파일명 정규화·경로 traversal 방지
 - ImagePost 생성/수정/삭제 API, 저장 경로는 설정·환경 변수로 분리
 - Post와 동일한 권한 원칙(작성자만 수정/삭제)
+- **로깅 (RULE 1.4.3)**: 파일 업로드·검증 실패·저장 실패 시 파라미터화 로깅, 파일 경로·사용자 정보 민감처리
 
 **Output Format:**
 
@@ -423,7 +451,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 1.3, ASVS V12
+**RULE Reference:** 1.3, ASVS V12, 1.4.3(로깅)
 
 ---
 
@@ -447,6 +475,7 @@
 - Pin API: 위치(위도·경도)·설명 등 필드, 사용자별 목록
 - Pin과 Post/ImagePost 연관(1:N 또는 N:M) 설계·엔티티 반영
 - DTO 기반 요청/응답, 소유권 검증
+- **로깅 (RULE 1.4.3)**: 주요 CRUD·소유권 검증 실패 시 파라미터화 로깅
 
 **Output Format:**
 
@@ -463,7 +492,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 3.1, 4.1
+**RULE Reference:** 3.1, 4.1, 1.4.3(로깅)
 
 ---
 
@@ -488,6 +517,7 @@
 - 반경(위도·경도·반경 km 등) 조건으로 Pin·Post/ImagePost 조회 API 구현
 - 외부 지도 API 호출 시 Timeout·Retry 정책 명시
 - (선택) 반경 조회 결과 Redis 캐시
+- **로깅 (RULE 1.4.3)**: 외부 API 호출·실패·재시도 시 파라미터화 로깅, 민감정보 제외
 
 **Output Format:**
 
@@ -505,7 +535,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 3.4, 3.2, **3.5.8**
+**RULE Reference:** 3.4, 3.2, **3.5.8**, 1.4.3(로깅)
 
 ---
 
@@ -530,6 +560,7 @@
 - 사용자 위치 획득·지도 중심 설정, 반경 내 Pin 마커 표시
 - Pin 클릭 시 해당 Pin의 게시글 목록·상세 링크 제공
 - 사용자 입력 표시 시 XSS 방지(이스케이프·dangerouslySetInnerHTML 금지)
+- **로깅 (RULE 1.4.3)**: 지도 API 호출·위치 권한 거부 등 클라이언트 이벤트 서버 전달 시 파라미터화 로깅
 
 **Output Format:**
 
@@ -546,7 +577,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 1.5.6, 1.3
+**RULE Reference:** 1.5.6, 1.3, 1.4.3(로깅)
 
 ---
 
@@ -571,6 +602,7 @@
 - 게시글 상세: 지도에 해당 위치·Pin 표시
 - 거리·경로 API 또는 클라이언트 계산: 사용자 위치→선택 위치 거리, (선택) 경로 폴리라인
 - 출발/도착 지점 설정 UI
+- **로깅 (RULE 1.4.3)**: 거리/경로 계산·외부 API 호출 시 파라미터화 로깅
 
 **Output Format:**
 
@@ -587,7 +619,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 2.1
+**RULE Reference:** 2.1, 1.4.3(로깅)
 
 ---
 
@@ -612,6 +644,7 @@
 - 내 게시글·ImagePost·Pin 목록 API·화면, 페이징
 - 개인정보 수정 API·화면(이메일·닉네임 등), 본인 인증 후 수정
 - About: 정적 또는 단순 뷰로 서비스 소개·지도 SNS 컨셉·기술 스택
+- **로깅 (RULE 1.4.3)**: 개인정보 수정 등 민감 작업 감사 로그, 파라미터화 로깅
 
 **Output Format:**
 
@@ -628,7 +661,7 @@
 
 **Duration:** 4일
 
-**RULE Reference:** 1.2
+**RULE Reference:** 1.2, 1.4.3(로깅)
 
 ---
 
@@ -655,6 +688,7 @@
 - 수정: 프로필·역할 등
 - 삭제: 회원 탈퇴/삭제 처리
 - 모든 요청에 ROLE_ADMIN 검증
+- **로깅 (RULE 1.4.2, 1.4.3)**: 관리자 회원 추가/수정/삭제 등 민감 작업 감사 로그, 파라미터화 로깅
 
 **Output Format:**
 
@@ -671,7 +705,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 1.2, PRD 3.6
+**RULE Reference:** 1.2, PRD 3.6, 1.4.2, 1.4.3(로깅)
 
 ---
 
@@ -696,6 +730,7 @@
 - 수정/삭제: 관리자 권한으로 타인 글도 가능
 - Post(및 필요 시 ImagePost)에 공지 플래그 추가, 공지 상단 노출 로직(목록 정렬·필터)
 - 공지 등록/해제 API·화면
+- **로깅 (RULE 1.4.2, 1.4.3)**: 관리자 게시물 수정/삭제·공지 등록 등 민감 작업 감사 로그
 
 **Output Format:**
 
@@ -712,7 +747,7 @@
 
 **Duration:** 4일
 
-**RULE Reference:** 1.2
+**RULE Reference:** 1.2, 1.4.3(로깅)
 
 ---
 
@@ -738,6 +773,7 @@
 - 글 통계: 일/주/월/분기/년 단위 집계 API·화면, 기간 선택
 - (선택) 차트 라이브러리로 시각화
 - 통계 조회는 readOnly 트랜잭션, 쿼리 최적화
+- **로깅 (RULE 1.4.3)**: 통계 조회·대량 쿼리 시 파라미터화 로깅, 무의미한 반복 로그 금지
 
 **Output Format:**
 
@@ -754,7 +790,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 2.3
+**RULE Reference:** 2.3, 1.4.3(로깅)
 
 ---
 
@@ -780,6 +816,7 @@
 - 로그·에러 응답에 비밀정보·스택 트레이스·내부 경로 미포함 확인
 - 기본 계정·비밀번호·불필요 엔드포인트 노출 제거 확인
 - RULE 부록 B·C 체크리스트 항목 점검·보완
+- **로깅 점검 (RULE 1.4.1, 1.4.2, 1.4.3)**: 비밀정보·스택 트레이스 로그 미포함, 인증/인가 실패 로깅 확인, 파라미터화·레벨 준수
 
 **Output Format:**
 
@@ -796,7 +833,7 @@
 
 **Duration:** 3일
 
-**RULE Reference:** 1.2.3, 1.5.4, 1.6
+**RULE Reference:** 1.2.3, 1.5.4, 1.6, 1.4.1, 1.4.2, 1.4.3(로깅)
 
 ---
 
@@ -822,6 +859,7 @@
 - Swagger: 모든 공개 API 설명·요청/응답 예시 정리
 - RULE 문서 대비 누락·위반 사항 정리·수정
 - **AOP RULE 3.5 점검**: 적용된 AOP에 대해 Pointcut(명시적·Annotation 기반), @Order, 예외 재throw, 상태 변경 미사용 확인; AOP 문서(적용 대상·목적·실행 시점·예외 정책·제거 시 영향도) 존재 여부 확인
+- **로깅 RULE 1.4.3 점검**: SLF4J 사용, 파라미터화 로깅, 민감정보 미출력, System.out/err 미사용, 예외 catch 후 로그 필수
 
 **Output Format:**
 
@@ -840,7 +878,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 4.2, 4.3, **3.5**
+**RULE Reference:** 4.2, 4.3, **3.5**, 1.4.3(로깅)
 
 ---
 
@@ -864,6 +902,7 @@
 - application-prod.yml 등 운영 설정: DB·Redis·서버 URL 등 환경 변수 참조로 통일
 - 배포 가이드: 필요 런타임(Java 21, Redis, MySQL), 환경 변수 목록, 기동·헬스체크 방법
 - Flutter 연동: REST API 호출 구조·인증(세션/쿠키 또는 토큰) 처리·지도 SDK 연동 예시를 문서로 정리
+- **로깅 (RULE 1.4.3)**: 운영 환경 로그 레벨·파일 경로·롤링 정책이 application-prod.yml에 반영되었는지 확인
 
 **Output Format:**
 
@@ -880,7 +919,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 1.1, PRD 7
+**RULE Reference:** 1.1, PRD 7, 1.4.3(로깅)
 
 ---
 
@@ -888,7 +927,7 @@
 
 | 영역 | 참조 |
 | ------ | ------ |
-| 보안 | RULE 1 (비밀정보, 인증·인가, 입력검증, 로그, 암호화, 설정, 공급망) |
+| 보안 | RULE 1 (비밀정보, 인증·인가, 입력검증, **로그 1.4.1~1.4.3**, 암호화, 설정, 공급망) |
 | 기능 | RULE 2 (API 설계, 예외, 트랜잭션, 상태) |
 | 기술 | RULE 3 (계층, ORM/QueryDSL, 통신) |
 | 품질 | RULE 4 (코드, 테스트, 문서) |

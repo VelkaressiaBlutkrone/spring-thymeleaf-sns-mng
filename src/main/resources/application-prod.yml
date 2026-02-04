@@ -33,9 +33,20 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+# RULE 1.4.3: 운영 환경 INFO 이상, 파일 롤링·보관 90일
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
+    com.example: ${LOG_LEVEL_APP:INFO}
+    com.example.repository: WARN
+  file:
+    name: ${LOG_FILE_PATH:/var/log/spring_thymleaf_map_sns_mng/app.log}
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 90
+      file-name-pattern: ${LOG_FILE_PATH:/var/log/spring_thymleaf_map_sns_mng}/app-%d{yyyy-MM-dd}.%i.log.gz
+      total-size-cap: 10GB
 
 management:
   endpoints:
