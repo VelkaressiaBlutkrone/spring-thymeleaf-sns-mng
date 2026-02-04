@@ -319,6 +319,103 @@ queryFactory.selectFrom(reservation)
 - **Retry 정책 명시**
 - Circuit Breaker 없는 무한 재시도 금지
 
+### 3.5 AOP 개발 규칙
+
+AOP는 **횡단 관심사(Cross-Cutting Concern)** 전용이며, 비즈니스 로직·도메인 규칙·상태 변경·핵심 흐름 제어에는 사용하지 않는다.
+
+#### 3.5.1 허용 대상 — 횡단 관심사만
+
+- **허용**: 로깅(Access Log, Audit Log), 트랜잭션 경계 제어, 보안/권한 검사, 성능 측정·메트릭, 공통 예외 처리 보조, 분산 트레이싱
+- **금지**: 비즈니스 로직, 도메인 규칙, 상태 변경 로직, 핵심 흐름 제어
+
+**Rule**: AOP 안에는 **"업무 규칙을 판단하는 코드"**가 절대 들어가면 안 된다.
+
+**이유**: 흐름이 코드 외부에서 변경됨, 디버깅 불가능, 유지보수 비용 급증.
+
+#### 3.5.2 보조 역할 — 필수 요소 금지
+
+- ❌ **나쁜 예**: AOP가 없으면 서비스가 정상 동작하지 않음, AOP 내부에서 필수 데이터 세팅
+- ✅ **좋은 예**: AOP 제거해도 시스템은 동작, 단지 "추가 정보"만 사라짐
+
+**Rule**: **AOP는 제거해도 시스템이 정상 동작해야 한다.**
+
+#### 3.5.3 Pointcut — 명시적·좁게 정의
+
+- ❌ **금지**: `execution(* com.app..*(..))` (패키지 전체)
+- ✅ **권장**: `execution(* com.app.order.application..*(..))`, `@annotation(TrackExecutionTime)` (Annotation 기반 우선)
+
+**Rule**: **패키지 전체 포인트컷 금지, Annotation 기반 우선 사용.**
+
+**이유**: 의도하지 않은 곳에 적용, 성능 문제, 신규 클래스 추가 시 부작용.
+
+#### 3.5.4 예외 처리 — 비즈니스 예외 삼키기 금지
+
+- ❌ **금지**: AOP 내부에서 예외 catch 후 `return null` 또는 예외 무시
+- ✅ **허용**: 예외 로깅 후 **재throw** (`throw e`)
+
+**Rule**: **AOP는 예외를 기록만 하고, 판단하거나 변환하지 않는다.** (Global Exception Handler가 담당)
+
+#### 3.5.5 트랜잭션 AOP — Service 계층만
+
+- **허용 위치**: Application Service, UseCase Layer
+- **금지 위치**: Domain Model, Repository 구현체, Controller
+
+**Rule**: **`@Transactional`은 Service 계층에만 선언한다.**
+
+**이유**: 트랜잭션 범위 추적 불가, Lazy Loading 오류, 테스트 어려움.
+
+#### 3.5.6 상태 변경 금지
+
+- ❌ **금지**: Entity 수정, Request 객체 변경, ThreadLocal 값 임의 조작
+- ✅ **허용**: 읽기 전용 접근, 별도 컨텍스트 객체에 기록
+
+**Rule**: **AOP는 관찰자(observer) 역할만 수행한다.**
+
+#### 3.5.7 순서(Order) 명시
+
+- 다중 AOP 사용 시 **`@Order` 필수** (예: Security → Transaction → Logging)
+
+**Rule**: **다중 AOP 사용 시 `@Order` 필수.**
+
+**이유**: 트랜잭션 전에 로그? 보안 이후 트랜잭션? 순서 불명확 시 버그 재현 불가.
+
+#### 3.5.8 성능 민감 영역 — 사전 검증
+
+- **대상**: 대량 반복 호출, 배치, 스트리밍 처리
+
+**Rule**: **반복 호출되는 로직에는 AOP 적용 전 성능 테스트 필수.**
+
+#### 3.5.9 Self Invocation 인지
+
+- **문제**: `this.internalMethod()` 호출 시 AOP 미적용
+
+**Rule**: **동일 클래스 내부 호출에는 AOP가 적용되지 않음을 명확히 인지.**
+
+**대안**: 별도 빈으로 분리, Application Service → Domain Service 분리.
+
+#### 3.5.10 문서화 필수
+
+- **필수 문서 항목**: 적용 대상(Pointcut), 목적, 실행 시점, 예외 처리 정책, 제거 시 영향도
+
+**Rule**: **AOP 추가 시 README 또는 ADR 문서 작성 필수.**
+
+---
+
+#### AOP 원칙 요약 (1페이지)
+
+| # | Rule |
+| --- | ------ |
+| 1 | AOP는 횡단 관심사 전용, 비즈니스 로직 금지 |
+| 2 | AOP 제거해도 시스템 정상 동작 (보조 역할) |
+| 3 | Pointcut 명시적·좁게, Annotation 기반 우선 |
+| 4 | 예외 판단·변환 금지, 기록 후 재throw |
+| 5 | 상태 변경 금지, 관찰자 역할만 |
+| 6 | `@Transactional`은 Service 계층만 |
+| 7 | 다중 AOP 시 `@Order` 필수 |
+| 8 | 성능 민감 영역은 적용 전 성능 검증 |
+| 9 | Self Invocation 미적용 인지, 빈 분리 등 대안 |
+| 10 | AOP 추가 시 문서화(Pointcut·목적·영향도) 필수 |
+
 ---
 
 ## 4. 품질(Quality) RULE — 유지보수 가능성
@@ -759,6 +856,10 @@ ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반�
 | 기술 | N+1 문제 대응 | ✅ |
 | 기술 | 엔티티 직접 반환 금지 | ✅ |
 | 기술 | 외부 호출 Timeout 설정 | ✅ |
+| 기술 (AOP) | 횡단 관심사 전용, 비즈니스 로직·상태 변경 금지 | ✅ |
+| 기술 (AOP) | Pointcut 명시적·Annotation 기반, @Transactional Service만 | ✅ |
+| 기술 (AOP) | AOP 예외 기록 후 재throw, 다중 AOP 시 @Order 명시 | ✅ |
+| 기술 (AOP) | AOP 추가 시 문서화(Pointcut·목적·영향도) | ✅ |
 | 품질 | 핵심 로직 테스트 존재 | ✅ |
 | 품질 | API 문서화 (Swagger) | ✅ |
 | 운영 | 환경별 설정 분리 | ✅ |

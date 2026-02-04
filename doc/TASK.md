@@ -82,21 +82,21 @@
 
 ---
 
-## Step 2 — 공통 인프라 (예외·Validation·보안 설정)
+## Step 2 — 공통 인프라 (예외·Validation·보안 설정·AOP)
 
-**Step Name:** 공통 인프라 (예외·Validation·보안 설정)
+**Step Name:** 공통 인프라 (예외·Validation·보안 설정·AOP)
 
-**Step Goal:** GlobalExceptionHandler·ErrorCode·Validation·보안 헤더를 도입하여 예외·에러·보안 설정을 일관되게 한다.
+**Step Goal:** GlobalExceptionHandler·ErrorCode·Validation·보안 헤더를 도입하고, 횡단 관심사용 AOP(로깅·감사·예외 보조)를 RULE 3.5에 맞게 적용하여 예외·에러·보안·관찰을 일관되게 한다.
 
 **Input:**
 
 - Step 1 완료(패키지 구조·ERD)
-- RULE 2.2(예외 처리), 1.6(보안 설정)
+- RULE 2.2(예외 처리), 1.6(보안 설정), **3.5(AOP 개발 규칙)**
 
 **Scope:**
 
-- 포함: 공통 예외 체계(BusinessException, ErrorCode, ErrorResponse), @Valid 기반 검증, HSTS/X-Content-Type-Options/CSP 등 보안 헤더, Actuator 노출 제한
-- 제외: 도메인별 상세 비즈니스 검증, OAuth2·JWT 구현
+- 포함: 공통 예외 체계(BusinessException, ErrorCode, ErrorResponse), @Valid 기반 검증, HSTS/X-Content-Type-Options/CSP 등 보안 헤더, Actuator 노출 제한, **횡단 관심사용 AOP(Access Log·Audit Log·예외 처리 보조)** 설계·구현
+- 제외: 도메인별 상세 비즈니스 검증, OAuth2·JWT 구현, **비즈니스 로직·상태 변경을 포함한 AOP**
 
 **Instructions:**
 
@@ -105,24 +105,33 @@
 - Controller 요청 DTO에 `@Valid` 및 검증 어노테이션 적용
 - 보안 헤더 필터 또는 설정(HSTS, X-Content-Type-Options, CSP 등) 적용
 - Actuator 엔드포인트 제한·인증(필요 시)
+- **AOP 적용 (RULE 3.5 준수)**
+  - Access Log / Audit Log용 Aspect: Pointcut은 **명시적·좁게** 또는 **Annotation 기반** (예: `@annotation(LogAccess)`), 패키지 전체 포인트컷 금지
+  - 예외 처리 보조: 예외 catch 시 **로깅만 하고 반드시 재throw** (예외 판단·변환·return null 금지)
+  - 다중 Aspect 사용 시 **@Order 명시** (예: Security → Transaction → Logging)
+  - AOP 내부에서 **상태 변경·Entity/Request 수정·비즈니스 판단 금지**
+  - **AOP 추가 시 문서화**: 적용 대상(Pointcut), 목적, 실행 시점, 예외 처리 정책, 제거 시 영향도 (README 또는 doc/)
 
 **Output Format:**
 
-- 코드: `exception/`, `config/` 등 계층에 맞는 패키지
+- 코드: `exception/`, `config/`, `aop/`(또는 `aspect/`) 등 계층에 맞는 패키지
 - ErrorCode·ErrorResponse: API 응답 스펙과 일치하는 JSON 구조
+- **AOP 문서**: Pointcut·목적·Order·예외 정책·제거 시 영향도
 
 **Constraints:**
 
 - RULE 2.2(공통 예외, 스택 트레이스 미노출), A02 Security Misconfiguration(1.6) 준수
+- **RULE 3.5(AOP)**: 횡단 관심사 전용, Pointcut 명시적·Annotation 우선, 예외 기록 후 재throw, 상태 변경 금지, @Order 명시, 문서화 필수
 - 에러 발생 시 200 OK 반환 금지
 
 **Done When:**
 
 - 미정의 예외 발생 시 GlobalExceptionHandler를 통해 일관된 ErrorResponse가 반환되고, 보안 헤더가 적용되어 있으며, Actuator가 제한되어 있다.
+- **AOP가 적용된 경우**: 제거해도 시스템이 정상 동작하며, Pointcut·Order·문서가 존재한다.
 
 **Duration:** 5일
 
-**RULE Reference:** 2.2, 1.6
+**RULE Reference:** 2.2, 1.6, **3.5**
 
 ---
 
@@ -158,6 +167,7 @@
 
 - RULE 3.1(Controller→Service→Repository 단방향), 3.3(엔티티 API 직접 반환 금지, N+1 대응 설계)
 - Domain이 Infra(Spring/JPA)에 과도히 종속되지 않도록 설계
+- **RULE 3.5.5**: `@Transactional`은 이 단계에서 Repository·Entity에 선언하지 않음 — Service 계층에서만 사용
 
 **Done When:**
 
@@ -165,7 +175,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 3.1, 3.3
+**RULE Reference:** 3.1, 3.3, **3.5.5**
 
 ---
 
@@ -323,6 +333,7 @@
 **Constraints:**
 
 - RULE 1.2(인증·인가 분리, deny-by-default, 403 사용), 1.2.3(CORS 오설정 금지)
+- **RULE 3.5**: 보안/권한 검사용 커스텀 AOP를 쓸 경우 횡단 관심사만, Pointcut 명시·@Order·문서화 준수
 
 **Done When:**
 
@@ -330,7 +341,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 1.2
+**RULE Reference:** 1.2, **3.5**
 
 ---
 
@@ -364,6 +375,7 @@
 **Constraints:**
 
 - RULE 2.1(API 책임 단위), 2.3(트랜잭션 Service), 1.2(IDOR 방지)
+- **RULE 3.5.5**: `@Transactional`은 Service 계층에만 선언(Controller·Repository 금지). 트랜잭션 AOP는 보조 역할만.
 
 **Done When:**
 
@@ -371,7 +383,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 2.1, 2.3, 1.2
+**RULE Reference:** 2.1, 2.3, 1.2, **3.5.5**
 
 ---
 
@@ -485,6 +497,7 @@
 **Constraints:**
 
 - RULE 3.4(외부 호출 Timeout), 3.2(프레임워크·외부 API 과의존 금지)
+- **RULE 3.5.8**: 반경 조회·대량 호출 등 성능 민감 구간에 AOP(로깅·메트릭) 적용 시 **적용 전 성능 테스트 필수**
 
 **Done When:**
 
@@ -492,7 +505,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 3.4, 3.2
+**RULE Reference:** 3.4, 3.2, **3.5.8**
 
 ---
 
@@ -808,23 +821,26 @@
 - (선택) REST API 통합 테스트(Testcontainers 등)
 - Swagger: 모든 공개 API 설명·요청/응답 예시 정리
 - RULE 문서 대비 누락·위반 사항 정리·수정
+- **AOP RULE 3.5 점검**: 적용된 AOP에 대해 Pointcut(명시적·Annotation 기반), @Order, 예외 재throw, 상태 변경 미사용 확인; AOP 문서(적용 대상·목적·실행 시점·예외 정책·제거 시 영향도) 존재 여부 확인
 
 **Output Format:**
 
 - 테스트: `src/test/` JUnit 5
-- 문서: Swagger UI, (선택) RULE 체크 결과 요약
+- 문서: Swagger UI, (선택) RULE 체크 결과 요약, **AOP 문서(README 또는 doc/)**
 
 **Constraints:**
 
 - RULE 4.2(테스트 없는 핵심 로직 배포 금지, 외부 환경 의존 최소화), 4.3(API 문서화)
+- **RULE 3.5**: AOP는 횡단 관심사 전용, 문서화 필수
 
 **Done When:**
 
 - 핵심 로직에 테스트가 있고, Swagger가 최신 API와 일치하며, RULE 체크가 완료되었다.
+- **적용된 AOP가 RULE 3.5를 만족하고, AOP 문서가 존재한다.**
 
 **Duration:** 5일
 
-**RULE Reference:** 4.2, 4.3
+**RULE Reference:** 4.2, 4.3, **3.5**
 
 ---
 
@@ -871,7 +887,7 @@
 ## RULE 참조 요약
 
 | 영역 | 참조 |
-|------|------|
+| ------ | ------ |
 | 보안 | RULE 1 (비밀정보, 인증·인가, 입력검증, 로그, 암호화, 설정, 공급망) |
 | 기능 | RULE 2 (API 설계, 예외, 트랜잭션, 상태) |
 | 기술 | RULE 3 (계층, ORM/QueryDSL, 통신) |
@@ -884,9 +900,9 @@
 ## 진행 추적 (체크리스트)
 
 | Step | 내용 | 완료 |
-|------|------|------|
+| ------ | ------ | ------ |
 | 1 | 프로젝트 셋업·아키텍처·ERD | ☐ |
-| 2 | 공통 인프라 | ☐ |
+| 2 | 공통 인프라 (예외·Validation·보안·AOP) | ☐ |
 | 3 | 패키지·엔티티·Repository | ☐ |
 | 4 | REST API 명세·인증 설계 | ☐ |
 | 5 | Redis·세션 | ☐ |
