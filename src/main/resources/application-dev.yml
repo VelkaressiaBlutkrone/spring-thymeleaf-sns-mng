@@ -48,11 +48,16 @@ logging:
       max-history: 30
       file-name-pattern: ./logs/app-%d{yyyy-MM-dd}.%i.log
 
-# RULE 6.1.4, 6.5: JWT 토큰 유효기간 (Step 5)
+# RULE 6.1.4, 6.5: JWT 토큰 유효기간·issuer·audience (Step 5, 6)
 app:
+  cookie:
+    secure: ${COOKIE_SECURE:true}
   jwt:
     access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
     refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:7}
+    issuer: ${JWT_ISSUER}
+    audience: ${JWT_AUDIENCE}
+    secret-key: ${JWT_SECRET_KEY}
 
 management:
   endpoints:

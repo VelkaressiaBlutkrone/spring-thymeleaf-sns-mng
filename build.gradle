@@ -23,7 +23,7 @@ configurations {
 repositories {
     mavenCentral()
     // Spring Milestone Repository (Spring Boot 4.x)
-    maven { url 'https://repo.spring.io/milestone' }
+    maven { url = 'https://repo.spring.io/milestone' }
 }
 
 dependencies {

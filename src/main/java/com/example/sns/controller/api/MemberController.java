@@ -9,35 +9,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.sns.dto.request.MemberJoinRequest;
+import com.example.sns.dto.response.MemberResponse;
+import com.example.sns.service.MemberService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 회원 API — 가입·조회.
- *
- * Step 4 API 스텁. 실제 구현은 Step 6.
  */
 @Tag(name = "회원 (Members)", description = "회원가입, 회원 조회")
 @RestController
 @RequestMapping("/api/members")
+@RequiredArgsConstructor
 public class MemberController {
+
+    private final MemberService memberService;
 
     @Operation(summary = "회원가입", description = "이메일·비밀번호·닉네임으로 가입")
     @PostMapping
-    public ResponseEntity<?> join(@Valid @RequestBody MemberJoinRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    public ResponseEntity<MemberResponse> join(@Valid @RequestBody MemberJoinRequest request) {
+        MemberResponse response = memberService.join(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(summary = "회원 조회", description = "회원 ID로 상세 조회")
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMember(@PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-    }
-
-    /**
-     * 회원가입 요청 스텁.
-     */
-    public record MemberJoinRequest(String email, String password, String nickname) {
+    public ResponseEntity<MemberResponse> getMember(@PathVariable Long id) {
+        MemberResponse response = memberService.getById(id);
+        return ResponseEntity.ok(response);
     }
 }

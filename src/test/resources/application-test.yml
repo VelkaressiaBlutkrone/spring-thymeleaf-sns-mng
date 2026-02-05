@@ -12,3 +12,13 @@ spring:
       ddl-auto: create-drop
   session:
     store-type: none
+
+app:
+  cookie:
+    secure: false
+  jwt:
+    access-ttl-minutes: 15
+    refresh-ttl-days: 7
+    issuer: test-issuer
+    audience: test-audience
+    secret-key: test-secret-key-min-256-bits-for-hs256-encoding

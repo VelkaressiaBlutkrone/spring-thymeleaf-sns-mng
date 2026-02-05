@@ -50,11 +50,16 @@ logging:
       file-name-pattern: ${LOG_FILE_PATH:/var/log/spring_thymleaf_map_sns_mng}/app-%d{yyyy-MM-dd}.%i.log.gz
       total-size-cap: 10GB
 
-# RULE 6.1.4, 6.5: JWT 토큰 유효기간 (Step 5)
+# RULE 6.1.4, 6.5: JWT 토큰 유효기간·issuer·audience (Step 5, 6)
 app:
+  cookie:
+    secure: ${COOKIE_SECURE:true}
   jwt:
     access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
     refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:30}
+    issuer: ${JWT_ISSUER}
+    audience: ${JWT_AUDIENCE}
+    secret-key: ${JWT_SECRET_KEY}
 
 management:
   endpoints:
