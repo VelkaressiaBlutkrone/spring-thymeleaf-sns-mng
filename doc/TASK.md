@@ -23,10 +23,24 @@
 
 ---
 
-## Step 템플릿 설명
+## 테스트 규칙 (RULE 4.2.2)
+
+- 테스트 작성 Step은 **RULE 4.2.2(테스트 코드 작성 규칙)** 준수
+- **Given-When-Then 패턴** 필수, `// given`, `// when`, `// then` 주석 3줄 필수
+- **AssertJ** 사용(JUnit Assertions 대신), **BDDMockito** 권장(given/willReturn)
+- **Mockito** (Java) / **MockK** (Kotlin) 목 객체 생성
+- 테스트 메서드 이름: BDD 스타일 (`[메서드명]_[상황]_should[결과]` 또는 `should[결과]_when[상황]`)
+- `@DisplayName` 필수(클래스·메서드 모두), 예외 테스트는 `assertThatThrownBy()` 사용
+- 단위 테스트: `@ExtendWith(MockitoExtension.class)` · Controller: `@WebMvcTest`+`@MockBean` · Repository: `@DataJpaTest` · 통합: `@SpringBootTest`(최소화)
+
+---
+
+## Step 템플릿 설명 (RULE 4.3.2)
+
+> 신규 Step 작성·추가 시 **RULE 4.3.2(Task 문서 작성 구조)** 를 반드시 준수한다.
 
 | 필드 | 설명 |
-|------|------|
+| ------ | ------ |
 | **Step Name** | 단계 이름 |
 | **Step Goal** | 단계 완료 시 달성할 목표(한 문장) |
 | **Input** | 이 단계에 필요한 입력(문서·코드·환경 등) |
@@ -43,7 +57,7 @@
 ## 일정 요약
 
 | Phase | Step 범위 | 기간(일) | 비고 |
-|-------|------------|----------|------|
+| ------- | ------------ | ---------- | ------ |
 | 설계·기반 | Step 1 ~ 5 | 25 | 아키텍처, ERD, 공통 인프라, 인증 설계 |
 | 회원·보안 | Step 6 ~ 7 | 11 | 회원 도메인, Spring Security, 역할 |
 | 게시판 | Step 8 ~ 9 | 11 | Post, ImagePost, 파일 업로드 |
@@ -841,21 +855,26 @@
 
 **Step Name:** 테스트·문서(Swagger)·RULE 체크
 
-**Step Goal:** 핵심 비즈니스 로직 단위/통합 테스트를 추가하고, Swagger를 정리하며, RULE 준수를 최종 확인한다.
+**Step Goal:** 핵심 비즈니스 로직 단위/슬라이스/통합 테스트를 **RULE 4.2.2**에 맞게 추가하고, Swagger를 정리하며, RULE 준수를 최종 확인한다.
 
 **Input:**
 
-- Step 2~17 완료 코드, RULE 4.2·4.3
+- Step 2~17 완료 코드, RULE 4.2·4.2.2·4.3
 
 **Scope:**
 
-- 포함: Service 계층 비즈니스 로직 단위 테스트, (선택) API 통합 테스트, Swagger/OpenAPI 최종 정리, RULE 준수 확인
+- 포함: Service 계층 단위 테스트, Controller 슬라이스 테스트(@WebMvcTest), (선택) Repository 슬라이스·통합 테스트, Swagger/OpenAPI 최종 정리, RULE 준수 확인
 - 제외: E2E·부하 테스트
 
 **Instructions:**
 
-- 핵심 Service 메서드에 단위 테스트 작성(외부 DB/API 목 사용)
-- (선택) REST API 통합 테스트(Testcontainers 등)
+- **테스트 작성 (RULE 4.2.2 준수)**
+  - **Given-When-Then 패턴** 및 `// given`, `// when`, `// then` 주석 필수
+  - **AssertJ** 사용, **BDDMockito** 권장(given/willReturn), **Mockito** 목 객체
+  - 테스트 메서드 이름: BDD 스타일 (`[메서드명]_[상황]_should[결과]` 등), `@DisplayName` 필수
+  - 단위 테스트: `@ExtendWith(MockitoExtension.class)` · Controller: `@WebMvcTest`+`@MockBean` · Repository: `@DataJpaTest` · 통합: `@SpringBootTest`(최소화)
+  - 예외 테스트: `assertThatThrownBy()` 사용, 한 테스트 메서드 = 한 시나리오
+- 핵심 Service 메서드 단위 테스트, (선택) Controller 슬라이스·REST API 통합 테스트(Testcontainers 등)
 - Swagger: 모든 공개 API 설명·요청/응답 예시 정리
 - RULE 문서 대비 누락·위반 사항 정리·수정
 - **AOP RULE 3.5 점검**: 적용된 AOP에 대해 Pointcut(명시적·Annotation 기반), @Order, 예외 재throw, 상태 변경 미사용 확인; AOP 문서(적용 대상·목적·실행 시점·예외 정책·제거 시 영향도) 존재 여부 확인
@@ -863,22 +882,23 @@
 
 **Output Format:**
 
-- 테스트: `src/test/` JUnit 5
+- 테스트: `src/test/` JUnit 5 + AssertJ + Mockito, RULE 4.2.2 템플릿 준수
 - 문서: Swagger UI, (선택) RULE 체크 결과 요약, **AOP 문서(README 또는 doc/)**
 
 **Constraints:**
 
-- RULE 4.2(테스트 없는 핵심 로직 배포 금지, 외부 환경 의존 최소화), 4.3(API 문서화)
-- **RULE 3.5**: AOP는 횡단 관심사 전용, 문서화 필수
+- RULE 4.2(테스트 없는 핵심 로직 배포 금지, 외부 환경 의존 최소화), **4.2.2(테스트 코드 작성 규칙)** 준수
+- RULE 4.3(API 문서화), **RULE 3.5**: AOP는 횡단 관심사 전용, 문서화 필수
 
 **Done When:**
 
-- 핵심 로직에 테스트가 있고, Swagger가 최신 API와 일치하며, RULE 체크가 완료되었다.
+- 핵심 로직에 **RULE 4.2.2** 준수 테스트가 있고, Swagger가 최신 API와 일치하며, RULE 체크가 완료되었다.
+- **테스트에 Given-When-Then·AssertJ·BDDMockito·@DisplayName·BDD 스타일 이름이 적용되어 있다.**
 - **적용된 AOP가 RULE 3.5를 만족하고, AOP 문서가 존재한다.**
 
 **Duration:** 5일
 
-**RULE Reference:** 4.2, 4.3, **3.5**, 1.4.3(로깅)
+**RULE Reference:** 4.2, **4.2.2(테스트 규칙)**, 4.3, **3.5**, 1.4.3(로깅)
 
 ---
 
@@ -930,7 +950,7 @@
 | 보안 | RULE 1 (비밀정보, 인증·인가, 입력검증, **로그 1.4.1~1.4.3**, 암호화, 설정, 공급망) |
 | 기능 | RULE 2 (API 설계, 예외, 트랜잭션, 상태) |
 | 기술 | RULE 3 (계층, ORM/QueryDSL, 통신) |
-| 품질 | RULE 4 (코드, 테스트, 문서) |
+| 품질 | RULE 4 (코드, **테스트 4.2·4.2.2**, 문서) |
 | 운영 | RULE 5 (설정 분리, 장애 대비) |
 | 인증/토큰 | RULE 6 (JWT, RSA, CIA, OAuth/OIDC) |
 
@@ -940,9 +960,9 @@
 
 | Step | 내용 | 완료 |
 | ------ | ------ | ------ |
-| 1 | 프로젝트 셋업·아키텍처·ERD | ☐ |
-| 2 | 공통 인프라 (예외·Validation·보안·AOP) | ☐ |
-| 3 | 패키지·엔티티·Repository | ☐ |
+| 1 | 프로젝트 셋업·아키텍처·ERD | ☑ |
+| 2 | 공통 인프라 (예외·Validation·보안·AOP) | ☑ |
+| 3 | 패키지·엔티티·Repository | ☑ |
 | 4 | REST API 명세·인증 설계 | ☐ |
 | 5 | Redis·세션 | ☐ |
 | 6 | 회원 가입·로그인 | ☐ |
@@ -963,6 +983,6 @@
 
 ---
 
-> **문서 버전**: 1.0.0
-> **기준**: PRD 1.0.0, RULE Book
-> **최종 업데이트**: 2026-02-04
+> **문서 버전**: 1.0.1
+> **기준**: PRD 1.0.0, RULE Book (4.2.2 테스트 규칙)
+> **최종 업데이트**: 2026-02-05

@@ -526,6 +526,148 @@ AOP는 **횡단 관심사(Cross-Cutting Concern)** 전용이며, 비즈니스 �
 - **테스트 없는 핵심 로직 배포 금지**
 - 테스트는 외부 환경(DB, API)에 의존하지 않는다
 
+#### 4.2.2 테스트 코드 작성 규칙 (2025~2026 베스트 프랙티스)
+
+> 모든 단위 테스트·슬라이스 테스트는 아래 규칙을 준수한다. 예외가 필요한 경우 기술 리더 승인 및 문서화를 거친다.
+
+##### 4.2.2.1 기본 원칙
+
+- **Given-When-Then 패턴 필수**: 모든 단위 테스트·슬라이스 테스트는 3단계 구조를 반드시 준수한다.
+- **주석 구분**: 테스트 메서드 본문에 `// given`, `// when`, `// then` 주석으로 명시적으로 3단계를 구분한다.
+- **AssertJ 사용**: 결과 검증에는 JUnit 기본 Assertions 대신 **AssertJ**를 사용한다.
+- **Mock 라이브러리**: Java → **Mockito**, Kotlin → **MockK** 사용.
+- **테스트 메서드 이름**: 행위 중심 + 결과 중심, **BDD 스타일** 권장.
+
+##### 4.2.2.2 테스트 유형별 적용 범위
+
+| 테스트 유형 | 사용 어노테이션 조합 | 목 객체 사용 | Given-When-Then 필수 | 추천 Assert | 비고 |
+|-------------|----------------------|--------------|----------------------|-------------|------|
+| 순수 단위 테스트 (Service, Util 등) | `@ExtendWith(MockitoExtension.class)` | Mockito / MockK | 필수 | AssertJ | Spring 컨텍스트 로드 X |
+| Repository 슬라이스 테스트 | `@DataJpaTest` + `@AutoConfigureTestDatabase` | 필요 시 Mock | 필수 | AssertJ | 실제 DB 사용 가능 |
+| Controller 슬라이스 테스트 | `@WebMvcTest` + `@MockBean` | 필수 (Service 등) | 필수 | AssertJ + MockMvc | |
+| 전체 통합 테스트 | `@SpringBootTest` + `@AutoConfigureMockMvc` | 최소화 | 권장 (복잡할 경우 필수) | AssertJ | 느리므로 최소화 |
+
+##### 4.2.2.3 테스트 메서드 이름 규칙 (강력 추천)
+
+- `[메서드명]_[상황설명]_should[기대결과]` 또는 `should[기대결과]_when[상황]`
+
+**예시 (Java)**
+
+```java
+findById_존재하는ID_주면_해당회원을반환한다
+register_중복이메일이면_예외를던진다
+```
+
+- Kotlin: `snake_case` 또는 자연어 스타일 허용 (팀 결정)
+
+##### 4.2.2.4 코드 구조 템플릿 (Java + JUnit 5 + Mockito + AssertJ)
+
+```java
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("회원 서비스 단위 테스트")
+class MemberServiceTest {
+
+    @Mock
+    private MemberRepository memberRepository;
+
+    @InjectMocks
+    private MemberService memberService;
+
+    @Test
+    @DisplayName("findById - 존재하는 ID로 조회하면 해당 회원을 반환한다")
+    void findById_존재하는ID_주면_해당회원을반환한다() {
+        // given
+        Long memberId = 1L;
+        Member expected = Member.builder()
+                .id(memberId)
+                .email("test@example.com")
+                .nickname("테스트유저")
+                .build();
+
+        given(memberRepository.findById(anyLong()))
+                .willReturn(Optional.of(expected));
+
+        // when
+        Member actual = memberService.findById(memberId);
+
+        // then
+        assertThat(actual)
+                .isNotNull()
+                .extracting("id", "email", "nickname")
+                .containsExactly(memberId, "test@example.com", "테스트유저");
+    }
+
+    @Test
+    @DisplayName("register - 이미 존재하는 이메일이면 예외를 던진다")
+    void register_중복이메일이면_예외를던진다() {
+        // given
+        MemberCreateRequest request = MemberCreateRequest.builder()
+                .email("duplicate@example.com")
+                .build();
+
+        given(memberRepository.existsByEmail(request.getEmail()))
+                .willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.register(request))
+                .isInstanceOf(DuplicateEmailException.class)
+                .hasMessage("이미 사용중인 이메일입니다.");
+    }
+}
+```
+
+##### 4.2.2.5 Kotlin + MockK 템플릿 (선택)
+
+```kotlin
+import io.kotest.assertions.throwables.shouldThrow
+import io.mockk.every
+import io.mockk.mockk
+
+@ExtendWith(MockitoExtension::class)  // 또는 Kotest + MockK 조합
+@DisplayName("회원 서비스")
+class MemberServiceTest {
+
+    private val memberRepository: MemberRepository = mockk()
+    private val memberService = MemberService(memberRepository)
+
+    @Test
+    fun `이메일로 회원 조회 - 존재하면 회원 반환`() {
+        // given
+        val email = "test@example.com"
+        val expected = Member(id = 1L, email = email, nickname = "테스트")
+
+        every { memberRepository.findByEmail(email) } returns expected
+
+        // when
+        val actual = memberService.findByEmail(email)
+
+        // then
+        assertThat(actual).isEqualTo(expected)
+    }
+}
+```
+
+##### 4.2.2.6 추가 강제 규칙
+
+- **주석 강제**: 모든 테스트에 `// given`, `// when`, `// then` 3줄 주석 필수 (가독성 극대화)
+- **BDDMockito 권장**: `given(...).willReturn(...)` 형식 사용 (`when(...).thenReturn(...)` 대신)
+- **AssertJ 체이닝**: `extracting()`, `hasFieldOrPropertyWithValue()`, `satisfies()` 등 적극 활용
+- **@DisplayName 필수**: 테스트 클래스와 메서드 모두에 의미 있는 한글 설명 작성
+- **예외 테스트**: `assertThatThrownBy()` 사용
+- **단일 책임**: 한 테스트 메서드 = 한 시나리오
+
 ### 4.3 문서 규칙
 
 #### 4.3.1 문서화 기준
@@ -533,6 +675,31 @@ AOP는 **횡단 관심사(Cross-Cutting Concern)** 전용이며, 비즈니스 �
 - 공개 API → **Swagger/OpenAPI 필수**
 - 설정 값 → README 또는 config 문서화
 - ❌ "코드 보면 안다" 금지
+
+#### 4.3.2 Task 문서 작성 구조 (`doc/TASK.md`)
+
+> Task 문서(`doc/TASK.md`)를 **새로 작성**하거나 **Step을 추가**할 때 반드시 아래 구조를 준수한다.
+
+##### 4.3.2.1 필수 필드 정의
+
+| 필드 | 설명 |
+| ------ | ------ |
+| **Step Name** | 단계 이름 |
+| **Step Goal** | 이 단계를 끝냈을 때 달성할 목표(한 문장) |
+| **Input** | 이 단계에 필요한 입력(문서·코드·환경 등) |
+| **Scope** | 포함/제외로 단계 범위 명시 |
+| **Instructions** | 수행할 작업 목록 |
+| **Output Format** | 산출물 형태·위치·형식 |
+| **Constraints** | 지켜야 할 제약(RULE·기술 등) |
+| **Done When** | 아래 조건이 충족되면 단계 완료로 간주 |
+| **Duration** | 예상 소요일수 |
+| **RULE Reference** | 참조할 RULE.md 섹션 |
+
+##### 4.3.2.2 강제 사항
+
+- 신규 Step 추가 시 위 **10개 필드를 모두 작성**한다.
+- 기존 Step 수정 시 해당 필드가 있다면 내용을 **갱신**한다.
+- 필드 누락 시 코드 리뷰에서 보완 요청 대상이 된다.
 
 ### 4.4 주석 규칙 (v1.0 — 2026.02)
 
@@ -1000,6 +1167,9 @@ ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반�
 | 기술 (AOP) | AOP 예외 기록 후 재throw, 다중 AOP 시 @Order 명시 | ✅ |
 | 기술 (AOP) | AOP 추가 시 문서화(Pointcut·목적·영향도) | ✅ |
 | 품질 | 핵심 로직 테스트 존재 | ✅ |
+| 품질 (테스트) | Given-When-Then 패턴, // given / when / then 주석 필수 (RULE 4.2.2) | ✅ |
+| 품질 (테스트) | AssertJ 사용, BDDMockito 권장, @DisplayName 필수 | ✅ |
+| 품질 (테스트) | 테스트 메서드 이름 BDD 스타일 (메서드명_상황_should결과) | ✅ |
 | 품질 | API 문서화 (Swagger) | ✅ |
 | 품질 (주석) | public API Javadoc 필수, 한글 주석 기본 (RULE 4.4) | ✅ |
 | 운영 | 환경별 설정 분리 | ✅ |
@@ -1029,5 +1199,5 @@ ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반�
 
 ---
 
-> **마지막 업데이트**: 2026-02-04
-> **버전**: 1.0.0
+> **마지막 업데이트**: 2026-02-05
+> **버전**: 1.0.1
