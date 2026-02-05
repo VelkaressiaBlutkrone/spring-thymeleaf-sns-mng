@@ -126,6 +126,8 @@ tasks.named('test') {
 tasks.register('integrationTest', Test) {
     group = 'verification'
     description = 'Runs integration tests (requires Docker for Testcontainers)'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform {
         includeTags 'integration'
     }

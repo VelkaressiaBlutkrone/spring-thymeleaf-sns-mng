@@ -14,6 +14,7 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "E003", "접근 권한이 없습니다."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "E004", "요청한 리소스를 찾을 수 없습니다."),
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "E005", "입력값 검증에 실패했습니다."),
+    SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "E503", "일시적으로 서비스를 이용할 수 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "E999", "서버 내부 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;

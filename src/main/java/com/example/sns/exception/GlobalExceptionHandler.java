@@ -9,6 +9,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -104,6 +105,17 @@ public class GlobalExceptionHandler {
         log.warn("Access denied: {}", e.getMessage());
         ErrorResponse response = ErrorResponse.of(ErrorCode.FORBIDDEN);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    /**
+     * DB 미연결 등 데이터 접근 실패 시 503 반환.
+     * Step 5.1: DB Fallback.
+     */
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException e) {
+        log.error("DataAccessException: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(ErrorCode.SERVICE_UNAVAILABLE);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
     }
 
     @ExceptionHandler(Exception.class)
