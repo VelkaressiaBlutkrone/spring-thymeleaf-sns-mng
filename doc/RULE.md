@@ -31,6 +31,28 @@
 - ❌ `application.yml`에 평문 비밀번호
 - ❌ 테스트용이라는 이유로 키를 코드에 남기는 행위
 
+#### 1.1.3 Secrets Rotation 정책 [MUST]
+
+- **자동 로테이션 필수** (수동 로테이션 금지)
+- 주기 기준 (2026년 권장):
+
+| Secret 종류 | 로테이션 주기 | 구현 방법 추천 | 비고 |
+|-------------|---------------|----------------|------|
+| DB 비밀번호 | 30~90일 | AWS Secrets Manager + Lambda 자동 | RDS 연동 |
+| API Key / 토큰 서명키 | 90일 이내 | HashiCorp Vault dynamic secrets | JWKS 로테이션 연계 |
+| JWT signing key pair | 90~180일 | Vault 또는 KMS + 자동 재배포 | 무중단 로테이션 계획 필수 |
+| Encryption key (KMS) | AWS-managed: 자동 / Customer-managed: 90~365일 | 자동 활성화 | 최소 1회 로테이션 증빙 |
+
+- **무중단 로테이션 계획 문서화 필수** (blue-green, canary 등)
+- **Dynamic Secrets 우선**: Vault DB 엔진 → 사용 시점에 생성 → TTL 만료 자동 폐기
+- **감사 로그**: 모든 rotation 이벤트 CloudTrail/Vault audit 로그 저장
+
+#### 1.1.4 Secrets Rotation 금지 & 권장
+
+- ❌ 장기 정적 secrets (180일 초과)
+- ❌ 로테이션 후 애플리케이션 재시작 의존
+- ✅ Vault dynamic secrets 또는 AWS Secrets Manager rotation lambda 사용
+
 ### 1.2 인증·인가 기본 규칙 (OWASP A01:2025 Broken Access Control)
 
 > **A01:2025 Broken Access Control** — 권한 없는 접근 허용. IDOR, 강제 브라우징, 권한 상승, CORS 오설정, **SSRF** 포함. 여전히 가장 흔하고 심각한 리스크.
@@ -303,6 +325,43 @@ LLM API 호출 등 AI 연동이 포함될 경우 아래 규칙을 적용한다.
 
 - **AI 생성 코드 도입 시 반드시 수동 보안 리뷰 필수**
 - 자동 생성·복사된 코드는 취약점 검증 없이 프로덕션에 반영 금지
+
+### 1.9 Rate Limiting & Throttling [MUST]
+
+모든 공개 API에 Rate Limiting 적용 (DoS, 브루트포스, 비용 폭증 방어)
+
+#### 1.9.1 알고리즘 및 구현
+
+- **알고리즘**: Token Bucket (Bucket4j 추천) 또는 Sliding Window (Resilience4j)
+- **분산 환경 필수**: Redis 또는 Hazelcast 백엔드 사용 (Bucket4j-redis 확장)
+- **Fallback / Backpressure**: 초과 시 `429 Too Many Requests` + `Retry-After` 헤더 반환
+- **예외 처리**: GlobalExceptionHandler에서 429 → ErrorResponse 통일
+
+#### 1.9.2 대상별 제한 기준 (운영 기본값)
+
+| 대상 | 제한 예시 | 구현 라이브러리 | 비고 |
+|------|-----------|-----------------|------|
+| 로그인/인증 | 5~10 req / 1분 (IP+계정) | Bucket4j + Redis | 계정 잠금 연계 |
+| 토큰 발급/갱신 | 20 req / 5분 | Bucket4j | Refresh 토큰 남용 방지 |
+| 일반 API (읽기) | 300~1000 req / 분 (userId) | Resilience4j RateLimiter | 글로벌 vs 사용자별 |
+| 민감 API (쓰기) | 50 req / 분 | Bucket4j | 데이터 변경 작업 |
+| 비인증 API | 100 req / 분 (IP 기준) | Spring Cloud Gateway | 봇/크롤러 방어 |
+
+#### 1.9.3 구현 예시 (Bucket4j)
+
+```java
+@Bean
+public Bucket loginBucket() {
+    return Bucket.builder()
+        .addLimit(Bandwidth.simple(10, Duration.ofMinutes(1)))
+        .build();
+}
+```
+
+#### 1.9.4 금지
+
+- ❌ 무제한 API
+- ❌ 클라이언트 측 rate limit만 의존
 
 ---
 
@@ -1179,6 +1238,177 @@ Future<void> fetchData() async {
 
 ---
 
+## 9. Observability & Distributed Tracing [MUST]
+
+> 장애 대응 및 성능 분석을 위한 관찰 가능성(Observability) 필수. traceId 없는 로그 → 상관관계 불가 → 장애 대응 지연.
+
+### 9.1 Observability 기본 원칙 [MUST]
+
+| # | Rule | 비고 |
+|---|------|------|
+| 1 | 모든 서비스는 **OpenTelemetry**를 통해 Traces, Metrics, Logs 통합 수집 (3 signals unified) | |
+| 2 | **로그와 트레이스 상관관계 필수**: traceId, spanId를 MDC에 자동 삽입 | |
+| 3 | **샘플링 전략 명시**: 개발/스테이징 = 100%, 운영 = head-based 10~20% (critical path는 100%) | |
+| 4 | **Vendor-neutral OTLP 프로토콜** 사용 (Jaeger, Zipkin, Tempo, Grafana Cloud, New Relic 등으로 export) | |
+
+### 9.2 Spring Boot 구현 가이드 (2025~2026 베스트)
+
+- **의존성**: `spring-boot-starter-opentelemetry` (Spring Boot 4.0+ 네이티브 지원)
+- **자동 인스트루먼테이션**: Spring Web, JDBC, Kafka, Redis 등 자동 적용
+- **수동 인스트루먼테이션** (비즈니스 로직 관찰 필요 시): Micrometer Observation → OpenTelemetry Span 자동 브릿지 (starter가 처리)
+
+```java
+// Micrometer Observation → OpenTelemetry Span 자동 브릿지 (starter가 처리)
+ObservationRegistry registry = ObservationRegistry.create();
+Observation.createNotStarted("business.operation", registry)
+    .lowCardinalityKeyValue("user.id", userId)
+    .observe(() -> {
+        // 비즈니스 로직
+    });
+```
+
+- **Collector 설정**: OpenTelemetry Collector 배포 → OTLP/gRPC 수신 → backend export
+- **로그 상관관계 설정**: logback 또는 log4j2에 opentelemetry appenders 적용
+
+### 9.3 Alerting & SLO 연계 [MUST]
+
+| 항목 | Rule |
+|------|------|
+| 알림 | ERROR 이상 + 비즈니스 critical span → 즉시 PagerDuty/Slack 알림 |
+| SLO 기반 alerting | 예: 99% 요청 latency < 500ms, error rate < 0.1% |
+| 도구 | Prometheus + Grafana 또는 Grafana Cloud 활용 권장 |
+
+### 9.4 금지 사항
+
+- ❌ **traceId 없는 로그** (상관관계 불가 → 장애 대응 지연)
+- ❌ **100% 샘플링 운영 환경 적용** (비용 폭증 + 성능 저하)
+
+---
+
+## 10. Container & Kubernetes Security [MUST / SHOULD 혼합]
+
+> 컨테이너 및 오케스트레이션 환경(Docker, Kubernetes 등)에서 발생하는 공급망 공격, 이미지 취약점, 권한 상승, 네트워크 노출 등의 위험을 방어하기 위한 규칙.  
+> OWASP Docker Security Cheat Sheet, Kubernetes Pod Security Standards (Restricted 수준), CIS Kubernetes Benchmarks v1.9+ (2025~2026 기준) 준수.
+
+### 10.1 Container Image Security [MUST]
+
+- **최소 베이스 이미지 사용**
+  - distroless, alpine 기반 또는 Chainguard/Wolfi 같은 hardened 이미지 우선
+  - ❌ full OS 이미지 (ubuntu:latest, debian:latest 등) 사용 금지 (공격면 과다)
+
+- **이미지 태그 고정 (Pinned versions)**
+  - `latest` 또는 floating tag 사용 금지
+  - 예: `FROM node:20-alpine@sha256:abc123...` (digest pinning)
+  - CI/CD에서 digest 검증 필수
+
+- **자동 이미지 스캐닝** [MUST]
+  - CI 빌드 단계에서 **Trivy** 또는 **Grype** 필수 실행
+  - Critical/High 취약점 발견 시 빌드 실패 처리 (exit-code 1)
+  - SBOM 생성 및 CycloneDX/SPDX 형식으로 아카이빙 (1.7 연계)
+
+```yaml
+# Trivy 예시 (GitHub Actions / GitLab CI)
+- name: Scan container image
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: '${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}'
+    format: 'table'
+    exit-code: '1'
+    ignore-unfixed: false
+    severity: 'CRITICAL,HIGH'
+```
+
+- **이미지 서명 및 검증** [MUST 권장]
+  - Cosign (Sigstore) 또는 Notation으로 서명
+  - 배포 시 admission controller (Kyverno/OPA Gatekeeper)에서 서명 검증 강제
+
+### 10.2 Runtime Security & Pod Hardening [MUST]
+
+#### 10.2.1 Pod Security Standards (PSS) 적용
+
+- 모든 네임스페이스에 **restricted** 레벨 기본 적용 (Pod Security Admission Controller 사용)
+- privileged, baseline 레벨은 기술 리더 승인 및 문서화 필수
+- **restricted 레벨 주요 강제 사항**
+  - `runAsNonRoot: true` (루트 실행 금지)
+  - `allowPrivilegeEscalation: false`
+  - `runAsUser`: MustRunAsNonRoot 또는 고정 non-root UID (e.g. 10000~)
+  - `capabilities`: drop ALL (필요 시 최소 추가)
+  - hostPath, hostNetwork, hostPID, hostIPC: 사용 금지
+  - `privileged: false`
+  - `seccompProfile`: RuntimeDefault 또는 fine-grained 프로필
+
+```yaml
+# 네임스페이스 레이블 예시
+metadata:
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+```
+
+#### 10.2.2 SecurityContext 기본 설정 [MUST]
+
+```yaml
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: RuntimeDefault
+```
+
+#### 10.2.3 금지 사항
+
+- ❌ `privileged: true`
+- ❌ root (uid 0) 컨테이너 실행
+- ❌ hostPath 마운트 (필수적 경우 readOnly + 제한 경로)
+- ❌ hostNetwork/hostPID/hostIPC 사용
+
+### 10.3 Network & Access Control [MUST]
+
+- **NetworkPolicy 기본 적용**
+  - 기본 deny-all 정책 + whitelist 방식으로 허용
+  - ingress/egress 모두 명시적 정의 (default-deny)
+
+```yaml
+# 예시: deny-all ingress + 허용 규칙
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+```
+
+- **RBAC 최소 권한**
+  - ClusterRole 대신 Role 사용
+  - ServiceAccount 토큰 자동 마운트 비활성화 (`automountServiceAccountToken: false`)
+
+### 10.4 Secrets & Config Management [MUST]
+
+- Kubernetes Secrets 대신 **Vault** 또는 **AWS Secrets Store CSI Driver** 사용 권장
+- Secrets를 volume/env로 마운트 시 **read-only** + tmpfs 권장
+- Long-lived SA 토큰 금지 → **IRSA (EKS)** 또는 **Workload Identity** 사용
+
+### 10.5 Monitoring & Runtime Protection [SHOULD]
+
+- **Falco** 또는 **Sysdig** 같은 런타임 보안 도구로 syscall, 파일 접근, 네트워크 이상 탐지
+- OpenTelemetry로 컨테이너 메트릭/트레이스 수집 (9장 연계)
+- Image/컨테이너 drift 탐지 (예: unexpected binary execution)
+
+### 10.6 문서화 & 체크리스트
+
+- 각 Helm 차트 / Deployment에 **SecurityContext** 및 **PSS 레이블** 적용 여부 명시
+- 정기 **CIS Kubernetes Benchmark** 스캔 (kube-bench) 실행 및 리포트 아카이빙
+- 취약 이미지/파드 발견 시 즉시 **remediation 계획** 문서화
+
+---
+
 ## 부록 A: ASVS 5.0 챕터별 대응 방안 (문제 → 대책)
 
 ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반으로 한 **문제 → 대책** 방식의 구체적 요구사항입니다.
@@ -1318,7 +1548,11 @@ ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반�
 | 보안 | 권한 부족 시 403 반환 | ✅ |
 | 보안 | 입력값 검증 적용 | ✅ |
 | 보안 | 로그에 민감정보 미포함 | ✅ |
+| 보안 (Secrets) | 자동 로테이션 필수, 장기 정적 secrets 180일 초과 금지 (RULE 1.1.3~1.1.4) | ✅ |
+| 보안 (Rate Limiting) | 공개 API Rate Limiting 적용, 429 + Retry-After 반환 (RULE 1.9) | ✅ |
 | 보안 (로깅) | SLF4J 사용, 파라미터화 로깅 `{}`, 로그 레벨 준수 (RULE 1.4.3) | ✅ |
+| Observability (9.x) | OpenTelemetry, traceId/spanId MDC 삽입, 100% 샘플링 운영 금지 | ✅ |
+| Container/K8s (10.x) | Trivy/Grype 이미지 스캔, PSS restricted, SecurityContext, NetworkPolicy deny-all | ✅ |
 | 기능 | HTTP Method 의미 준수 | ✅ |
 | 기능 | 공통 예외 체계 사용 | ✅ |
 | 기능 | 트랜잭션 경계 Service 계층 | ✅ |
@@ -1367,4 +1601,4 @@ ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반�
 ---
 
 > **마지막 업데이트**: 2026-02-05
-> **버전**: 1.0.2 (JavaScript 코딩 규칙 섹션 8 추가)
+> **버전**: 1.0.4 (Container & Kubernetes Security 섹션 10 추가)
