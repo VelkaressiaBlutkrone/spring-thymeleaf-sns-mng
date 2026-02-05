@@ -6,6 +6,7 @@ import lombok.Getter;
  * 비즈니스 로직 예외.
  *
  * IllegalArgumentException 등 직접 사용 금지 (RULE 2.2.4).
+ * Checked Exception 사용 금지, Runtime 기반 예외 체계 (RULE 2.2.6).
  */
 @Getter
 public class BusinessException extends RuntimeException {

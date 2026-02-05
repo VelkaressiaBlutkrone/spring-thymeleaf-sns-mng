@@ -23,7 +23,7 @@
 
 ---
 
-## 테스트 규칙 (RULE 4.2.2)
+## 테스트 규칙 (RULE 4.2.2, 4.2.1.1, 1.2.4)
 
 - 테스트 작성 Step은 **RULE 4.2.2(테스트 코드 작성 규칙)** 준수
 - **Given-When-Then 패턴** 필수, `// given`, `// when`, `// then` 주석 3줄 필수
@@ -32,6 +32,8 @@
 - 테스트 메서드 이름: BDD 스타일 (`[메서드명]_[상황]_should[결과]` 또는 `should[결과]_when[상황]`)
 - `@DisplayName` 필수(클래스·메서드 모두), 예외 테스트는 `assertThatThrownBy()` 사용
 - 단위 테스트: `@ExtendWith(MockitoExtension.class)` · Controller: `@WebMvcTest`+`@MockBean` · Repository: `@DataJpaTest` · 통합: `@SpringBootTest`(최소화)
+- **테스트 결정성 (4.2.1.1)**: `System.currentTimeMillis()`, `LocalDateTime.now()` 직접 사용 금지 → `Clock`, `TimeProvider` 추상화. 랜덤값은 고정 시드 또는 Stub
+- **인증·인가 테스트 (1.2.4)**: 보호 API는 401(미인증)·403(권한 부족) 테스트 최소 1개 이상 필수
 
 ---
 
@@ -219,7 +221,7 @@
 
 **Step Name:** REST API 명세 확정·인증 설계
 
-**Step Goal:** 회원·게시글·Pin·관리자 등 REST API 목록과 인증(세션/Redis) 방식을 확정하고, Swagger 골격을 갖춘다.
+**Step Goal:** 회원·게시글·Pin·관리자 등 REST API 목록과 **JWT 기반 인증** 방식을 확정하고, Swagger 골격을 갖춘다.
 
 **Input:**
 
@@ -227,14 +229,14 @@
 
 **Scope:**
 
-- 포함: API 목록·Method·Request/Response 정의, 세션(Redis) 기반 인증 설계, Swagger/OpenAPI 설정
+- 포함: API 목록·Method·Request/Response 정의, **JWT(Access+Refresh Token)** 인증 설계, Swagger/OpenAPI 설정
 - 제외: 실제 API 구현 코드, OAuth2 구현
 
 **Instructions:**
 
 - 회원(가입/로그인/조회), 게시글(목록/상세/작성/수정/삭제), Pin(CRUD), 관리자(회원·게시물·통계) 등 API 목록 작성
 - 각 API별 HTTP Method, URL, Request/Response 본문·쿼리 파라미터 정의
-- 세션·쿠키 기반 인증 흐름 정리(Redis 저장 전제)
+- **JWT 기반 인증 흐름 정리 (RULE 6.1~6.5 준수)**: Access Token(15분 이하), Refresh Token(Redis), jti·Revocation, iss/aud 검증
 - OAuth2 확장 시 필요한 확장 포인트(엔드포인트·역할) 정리
 - SpringDoc/Swagger 설정으로 API 문서 골격 노출
 - **로깅 (RULE 1.4.3)**: Swagger/Actuator 접근 등 공개 엔드포인트에 무의미한 반복 로그 금지
@@ -247,7 +249,7 @@
 
 **Constraints:**
 
-- RULE 2.1(HTTP Method 준수, API당 명확한 책임), 4.3(공개 API Swagger 필수)
+- RULE 2.1(HTTP Method 준수, API당 명확한 책임), 4.3(공개 API Swagger 필수), **6.1~6.5(JWT·토큰 관리)**
 
 **Done When:**
 
@@ -255,49 +257,50 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 2.1, 4.3, 1.4.3(로깅)
+**RULE Reference:** 2.1, **2.1.3(내부/Admin API 분리)**, 4.3, 1.4.3(로깅), **6.1~6.5(JWT)**
 
 ---
 
-## Step 5 — Redis 연동·세션 설정
+## Step 5 — Redis 연동·JWT·캐시 설정
 
-**Step Name:** Redis 연동·세션 설정
+**Step Name:** Redis 연동·JWT·캐시 설정
 
-**Step Goal:** Redis를 연결하고 세션 저장소로 사용하며, 위치 기반 캐시 전략을 정의한다.
+**Step Goal:** Redis를 연결하고 **Refresh Token 저장·JWT 블랙리스트** 및 위치 기반 캐시 전략을 정의한다.
 
 **Input:**
 
-- Step 1 설정 골격, PRD 4.1.3(Redis 활용)
+- Step 1 설정 골격, PRD 4.1.3(Redis 활용), Step 4(JWT 인증 설계)
 
 **Scope:**
 
-- 포함: Redis 의존성·연결 설정, Spring Session Redis, 세션 저장소 이전, 위치 캐시 키/TTL 정책 문서화
+- 포함: Redis 의존성·연결 설정, **Refresh Token Redis 저장**, **Access Token jti 블랙리스트**, 위치 캐시 키/TTL 정책 문서화
 - 제외: 비즈니스 캐시 구현(반경 조회 등은 이후 단계)
 
 **Instructions:**
 
 - Redis 연결 설정(호스트·포트·비밀번호는 환경 변수)
-- Spring Session Redis 설정으로 HTTP 세션 저장소를 Redis로 이전
+- **Refresh Token 저장**: Redis 키 `refresh:{jti}`, TTL 7~30일 (RULE 6.5)
+- **JWT 블랙리스트**: 로그아웃 시 `blacklist:{jti}` 등록, Access Token 만료시간 TTL
 - (선택) 위치 기반 캐시용 키 네이밍·TTL 정책 문서화
-- **로깅 (RULE 1.4.3)**: Redis 연결·세션 저장 성공/실패 시 파라미터화 로깅, 비밀정보 제외
+- **로깅 (RULE 1.4.3)**: Redis 연결·토큰 저장 성공/실패 시 파라미터화 로깅, 비밀정보 제외
 
 **Output Format:**
 
 - 설정: `application-*.yml` 또는 환경 변수
-- 세션: 로그인 후 세션이 Redis에 저장되는지 확인 가능
+- Redis: Refresh Token 저장·블랙리스트 조회 가능
 
 **Constraints:**
 
-- RULE 2.4(세션 스토리지 명시, Stateless 지향)
+- RULE 2.4(Stateless 지향), **6.1.7(Revocation)**, 6.5(Refresh Token Redis)
 - Redis 비밀번호 등 비밀정보는 환경 변수 주입
 
 **Done When:**
 
-- 애플리케이션 기동 시 Redis에 연결되고, 로그인 세션이 Redis에 저장·조회된다.
+- 애플리케이션 기동 시 Redis에 연결되고, Refresh Token 저장·블랙리스트 조회가 가능하다.
 
 **Duration:** 5일
 
-**RULE Reference:** 2.4, 1.1, 1.4.3(로깅)
+**RULE Reference:** 2.4, 1.1, 1.4.3(로깅), **6.1.7, 6.5**
 
 ---
 
@@ -305,36 +308,39 @@
 
 **Step Name:** 회원 도메인·가입·로그인 API
 
-**Step Goal:** 회원가입·로그인 REST API를 구현하고, 세션을 Redis에 생성·유지한다.
+**Step Goal:** 회원가입·로그인 REST API를 구현하고, **JWT(Access+Refresh Token)** 를 발급·검증한다.
 
 **Input:**
 
-- Step 3(엔티티·Repository), Step 4(API 명세·인증 설계), Step 5(Redis 세션)
+- Step 3(엔티티·Repository), Step 4(API 명세·JWT 인증 설계), Step 5(Redis·Refresh Token)
 
 **Scope:**
 
-- 포함: 회원가입(이메일/비밀번호), 로그인·세션 생성(Redis), 중복 이메일 검증, 입력값 검증
+- 포함: 회원가입(이메일/비밀번호), **로그인·JWT 발급**(Access 15분, Refresh Redis), 토큰 갱신·로그아웃, 중복 이메일 검증, 입력값 검증
 - 제외: OAuth2, 이메일 인증, 비밀번호 찾기
 
 **Instructions:**
 
 - 회원가입 API: 이메일·비밀번호 등 필드 검증(@Valid), BCrypt/Argon2id 해싱, 중복 이메일 시 4xx·ErrorCode 반환
-- 로그인 API: 인증 성공 시 세션 생성(Redis), 실패 시 401
+- **로그인 API**: 인증 성공 시 Access Token(15분 이하)+Refresh Token 발급, Refresh Token Redis 저장, 실패 시 401
+- **토큰 갱신 API**: Cookie refreshToken → 새 Access Token 발급
+- **로그아웃 API**: jti 블랙리스트 등록, Refresh Token Redis 삭제
+- JWT: iss/aud/jti/exp 검증, alg allow-list(RS256/ES256), 민감정보 Payload 금지 (RULE 6.1)
 - DTO·Service·Controller 계층 분리, 트랜잭션은 Service 계층
-- **로깅 (RULE 1.4.2, 1.4.3)**: 인증 실패·권한 부족 시도 로깅, 민감 작업(가입·로그인 성공) 감사 로그, 비밀번호·토큰 로그 출력 금지
+- **로깅 (RULE 1.4.2, 1.4.3)**: 인증 실패·권한 부족 시도 로깅, 민감 작업 감사 로그, 비밀번호·토큰 로그 출력 금지
 
 **Output Format:**
 
-- API: POST /api/members (가입), POST /api/auth/login (로그인) 등 명세와 일치
+- API: POST /api/members (가입), POST /api/auth/login, /refresh, /logout 등 명세와 일치
 - 응답: 공통 ErrorResponse, 401/403 명확히 사용
 
 **Constraints:**
 
-- RULE 1.1(비밀정보 하드코딩 금지), 1.3(입력 검증), 1.2(인증 실패 401)
+- RULE 1.1(비밀정보 하드코딩 금지), 1.3(입력 검증), 1.2(인증 실패 401), **6.1~6.5(JWT)**
 
 **Done When:**
 
-- 회원가입·로그인 API가 동작하고, 로그인 시 Redis에 세션이 생성되며, 실패 시 401이 반환된다.
+- 회원가입·로그인 API가 동작하고, 로그인 시 JWT가 발급되며, 토큰 갱신·로그아웃이 정상 동작하고, 실패 시 401이 반환된다.
 
 **Duration:** 6일
 
@@ -361,7 +367,8 @@
 
 - SecurityConfig: 인증·인가 규칙 정의, deny-by-default
 - 로그인 사용자에게 ROLE_USER, 관리자 계정에 ROLE_ADMIN 부여
-- /admin/** 은 ROLE_ADMIN만 접근 허용, 미인가 시 403
+- **내부/관리자 API 분리 (RULE 2.1.3)**: `/api/admin/**` URL·보안 정책 분리, Admin API는 IP allow-list 또는 별도 인증 체계 고려
+- /api/admin/** 은 ROLE_ADMIN만 접근 허용, 미인가 시 403
 - CORS: 허용 오리진을 allow-list로 제한(* 금지)
 - **로깅 (RULE 1.4.2, 1.4.3)**: 인가 실패(403) 시도 로깅, 파라미터화 로깅 사용
 
@@ -381,7 +388,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 1.2, **3.5**, 1.4.2, 1.4.3(로깅)
+**RULE Reference:** 1.2, **2.1.3(내부/Admin API 분리)**, **3.5**, 1.4.2, 1.4.3(로깅)
 
 ---
 
@@ -406,6 +413,7 @@
 - POST/PUT/DELETE: 로그인 필수, 수정·삭제 시 작성자 소유권 검증(IDOR 방지)
 - 작성 시 제목·내용·작성 위치(위도·경도 선택) 저장
 - 트랜잭션 경계는 Service, 읽기 전용 조회는 readOnly
+- **트랜잭션·이벤트 (RULE 2.3.2)**: 이벤트 발행 시 트랜잭션 커밋 이후(`@TransactionalEventListener(AFTER_COMMIT)`)
 - **로깅 (RULE 1.4.3)**: 주요 CRUD·소유권 검증 실패(IDOR) 시 파라미터화 로깅
 
 **Output Format:**
@@ -424,7 +432,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 2.1, 2.3, 1.2, **3.5.5**, 1.4.3(로깅)
+**RULE Reference:** 2.1, 2.3, **2.3.2(트랜잭션·이벤트)**, 1.2, **3.5.5**, 1.4.3(로깅)
 
 ---
 
@@ -829,6 +837,7 @@
 - 로그인·회원가입·토큰 갱신 등에 Rate Limiting 적용
 - 로그·에러 응답에 비밀정보·스택 트레이스·내부 경로 미포함 확인
 - 기본 계정·비밀번호·불필요 엔드포인트 노출 제거 확인
+- **긴급 비활성화 (RULE 5.3)**: 핵심 기능 Feature Toggle 또는 Kill Switch 고려 여부 점검
 - RULE 부록 B·C 체크리스트 항목 점검·보완
 - **로깅 점검 (RULE 1.4.1, 1.4.2, 1.4.3)**: 비밀정보·스택 트레이스 로그 미포함, 인증/인가 실패 로깅 확인, 파라미터화·레벨 준수
 
@@ -847,7 +856,7 @@
 
 **Duration:** 3일
 
-**RULE Reference:** 1.2.3, 1.5.4, 1.6, 1.4.1, 1.4.2, 1.4.3(로깅)
+**RULE Reference:** 1.2.3, 1.5.4, 1.6, **5.3(긴급 비활성화)**, 1.4.1, 1.4.2, 1.4.3(로깅)
 
 ---
 
@@ -868,12 +877,14 @@
 
 **Instructions:**
 
-- **테스트 작성 (RULE 4.2.2 준수)**
+- **테스트 작성 (RULE 4.2.2, 4.2.1.1, 1.2.4 준수)**
   - **Given-When-Then 패턴** 및 `// given`, `// when`, `// then` 주석 필수
   - **AssertJ** 사용, **BDDMockito** 권장(given/willReturn), **Mockito** 목 객체
   - 테스트 메서드 이름: BDD 스타일 (`[메서드명]_[상황]_should[결과]` 등), `@DisplayName` 필수
   - 단위 테스트: `@ExtendWith(MockitoExtension.class)` · Controller: `@WebMvcTest`+`@MockBean` · Repository: `@DataJpaTest` · 통합: `@SpringBootTest`(최소화)
   - 예외 테스트: `assertThatThrownBy()` 사용, 한 테스트 메서드 = 한 시나리오
+  - **테스트 결정성 (4.2.1.1)**: `System.currentTimeMillis()`, `LocalDateTime.now()` 직접 사용 금지, `Clock`/`TimeProvider` 추상화. 랜덤값은 고정 시드 또는 Stub
+  - **인증·인가 테스트 (1.2.4)**: 보호 API는 401(미인증)·403(권한 부족) 테스트 최소 1개 이상 필수
 - 핵심 Service 메서드 단위 테스트, (선택) Controller 슬라이스·REST API 통합 테스트(Testcontainers 등)
 - Swagger: 모든 공개 API 설명·요청/응답 예시 정리
 - RULE 문서 대비 누락·위반 사항 정리·수정
@@ -898,7 +909,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 4.2, **4.2.2(테스트 규칙)**, 4.3, **3.5**, 1.4.3(로깅)
+**RULE Reference:** 4.2, **4.2.2(테스트 규칙)**, **4.2.1.1(테스트 결정성)**, **1.2.4(인증·인가 테스트)**, 4.3, **3.5**, 1.4.3(로깅)
 
 ---
 
@@ -921,7 +932,8 @@
 
 - application-prod.yml 등 운영 설정: DB·Redis·서버 URL 등 환경 변수 참조로 통일
 - 배포 가이드: 필요 런타임(Java 21, Redis, MySQL), 환경 변수 목록, 기동·헬스체크 방법
-- Flutter 연동: REST API 호출 구조·인증(세션/쿠키 또는 토큰) 처리·지도 SDK 연동 예시를 문서로 정리
+- **긴급 비활성화 (RULE 5.3)**: Feature Toggle 또는 Kill Switch 적용 여부·운영 방법 문서화
+- Flutter 연동: REST API 호출 구조·**인증(JWT Bearer, Refresh Token Secure Storage)** 처리·지도 SDK 연동 예시를 문서로 정리
 - **로깅 (RULE 1.4.3)**: 운영 환경 로그 레벨·파일 경로·롤링 정책이 application-prod.yml에 반영되었는지 확인
 
 **Output Format:**
@@ -939,7 +951,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 1.1, PRD 7, 1.4.3(로깅)
+**RULE Reference:** 1.1, PRD 7, **5.3(긴급 비활성화)**, 1.4.3(로깅)
 
 ---
 
@@ -947,11 +959,11 @@
 
 | 영역 | 참조 |
 | ------ | ------ |
-| 보안 | RULE 1 (비밀정보, 인증·인가, 입력검증, **로그 1.4.1~1.4.3**, 암호화, 설정, 공급망) |
-| 기능 | RULE 2 (API 설계, 예외, 트랜잭션, 상태) |
+| 보안 | RULE 1 (비밀정보, 인증·인가, **1.2.4 인증·인가 테스트**, 입력검증, 로그 1.4.1~1.4.3, 암호화, 설정, 공급망) |
+| 기능 | RULE 2 (API 설계, **2.1.3 내부/Admin API 분리**, 예외, **2.2.6 Checked Exception 금지**, **2.3.2 트랜잭션·이벤트**, 상태) |
 | 기술 | RULE 3 (계층, ORM/QueryDSL, 통신) |
-| 품질 | RULE 4 (코드, **테스트 4.2·4.2.2**, 문서) |
-| 운영 | RULE 5 (설정 분리, 장애 대비) |
+| 품질 | RULE 4 (코드, **테스트 4.2·4.2.2·4.2.1.1 결정성**, 문서) |
+| 운영 | RULE 5 (설정 분리, 장애 대비, **5.3 긴급 비활성화**) |
 | 인증/토큰 | RULE 6 (JWT, RSA, CIA, OAuth/OIDC) |
 
 ---
@@ -964,7 +976,7 @@
 | 2 | 공통 인프라 (예외·Validation·보안·AOP) | ☑ |
 | 3 | 패키지·엔티티·Repository | ☑ |
 | 4 | REST API 명세·인증 설계 | ☐ |
-| 5 | Redis·세션 | ☐ |
+| 5 | Redis·JWT·캐시 | ☐ |
 | 6 | 회원 가입·로그인 | ☐ |
 | 7 | Spring Security·역할 | ☐ |
 | 8 | Post CRUD | ☐ |

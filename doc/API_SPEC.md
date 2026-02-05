@@ -7,7 +7,7 @@
 | 항목 | 내용 |
 |------|------|
 | Base URL | `/api` |
-| 인증 | 세션·쿠키 기반 (Redis 저장) |
+| 인증 | **JWT** (Access Token Bearer, Refresh Token Redis·쿠키) |
 | 응답 형식 | JSON |
 | 공통 에러 | `ErrorResponse` (code, message, fieldErrors) |
 
@@ -57,7 +57,7 @@
 
 ---
 
-## 3. 인증 (Auth)
+## 3. 인증 (Auth) — JWT (RULE 6.1~6.5)
 
 ### 3.1 로그인
 
@@ -67,7 +67,7 @@
 | URL | `/api/auth/login` |
 | 인증 | 불필요 |
 | Request Body | `LoginRequest` |
-| Response | `200 OK` (세션 생성, Set-Cookie) 또는 `401 Unauthorized` |
+| Response | `200 OK` + `LoginResponse` + Set-Cookie(refreshToken) 또는 `401` |
 
 **LoginRequest**
 
@@ -76,22 +76,44 @@
 | email | string | O | 이메일 |
 | password | string | O | 비밀번호 |
 
-### 3.2 로그아웃
+**LoginResponse (200)**
+
+```json
+{
+  "accessToken": "eyJhbGciOiJSUzI1NiIs...",
+  "tokenType": "Bearer",
+  "expiresIn": 900
+}
+```
+
+- **Set-Cookie**: `refreshToken` (HttpOnly, Secure, SameSite=Strict)
+- Access Token 유효기간: **15분 이하** (RULE 6.1.4)
+
+### 3.2 토큰 갱신 (Refresh)
+
+| 항목 | 내용 |
+|------|------|
+| Method | `POST` |
+| URL | `/api/auth/refresh` |
+| 인증 | Cookie: refreshToken |
+| Response | `200 OK` + `LoginResponse` 또는 `401` |
+
+### 3.3 로그아웃
 
 | 항목 | 내용 |
 |------|------|
 | Method | `POST` |
 | URL | `/api/auth/logout` |
-| 인증 | 로그인 필수 |
-| Response | `200 OK` (세션 무효화) |
+| 인증 | Bearer accessToken + Cookie: refreshToken |
+| Response | `200 OK` (jti 블랙리스트, Refresh Token 삭제) |
 
-### 3.3 현재 사용자 조회
+### 3.4 현재 사용자 조회
 
 | 항목 | 내용 |
 |------|------|
 | Method | `GET` |
 | URL | `/api/auth/me` |
-| 인증 | 로그인 필수 |
+| 인증 | `Authorization: Bearer {accessToken}` |
 | Response | `200 OK` + `MemberResponse` 또는 `401` |
 
 ---
