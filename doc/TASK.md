@@ -1026,7 +1026,7 @@
 | 7    | Spring Security·역할                   | ☑    |
 | 8    | Post CRUD                              | ☑    |
 | 9    | ImagePost·파일 업로드                  | ☑    |
-| 10   | Pin·Location·API                       | ☐    |
+| 10   | Pin·Location·API                       | ☑    |
 | 11   | 지도 추상화·반경 조회                  | ☐    |
 | 12   | 지도 웹 UI·Pin 표시                    | ☐    |
 | 13   | 지도-게시글 연동·경로/거리             | ☐    |

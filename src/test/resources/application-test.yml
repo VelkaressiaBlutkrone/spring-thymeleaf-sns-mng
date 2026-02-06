@@ -24,3 +24,11 @@ app:
     issuer: test-issuer
     audience: test-audience
     secret-key: test-secret-key-min-256-bits-for-hs256-encoding
+  upload:
+    base-path: ./build/uploads-test
+    allowed-mime-types:
+      - image/jpeg
+      - image/png
+      - image/gif
+      - image/webp
+    max-file-size-bytes: 5242880

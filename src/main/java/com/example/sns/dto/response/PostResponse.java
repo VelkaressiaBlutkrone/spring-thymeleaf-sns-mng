@@ -18,6 +18,7 @@ public record PostResponse(
         String content,
         Double latitude,
         Double longitude,
+        Long pinId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -31,6 +32,7 @@ public record PostResponse(
                 post.getContent(),
                 post.getLatitude(),
                 post.getLongitude(),
+                post.getPin() != null ? post.getPin().getId() : null,
                 post.getCreatedAt(),
                 post.getUpdatedAt()
         );

@@ -46,16 +46,21 @@ public class Post extends BaseEntity {
     @Column
     private Double longitude;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pin_id")
+    private Pin pin;
+
     @Column(nullable = false)
     private boolean notice = false;
 
     @Builder
-    public Post(User author, String title, String content, Double latitude, Double longitude) {
+    public Post(User author, String title, String content, Double latitude, Double longitude, Pin pin) {
         this.author = author;
         this.title = title;
         this.content = content;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.pin = pin;
         onCreate();
     }
 

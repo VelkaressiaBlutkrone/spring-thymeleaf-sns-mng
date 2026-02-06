@@ -12,6 +12,7 @@ import com.example.sns.dto.request.PostUpdateRequest;
 import com.example.sns.dto.response.PostResponse;
 import com.example.sns.exception.BusinessException;
 import com.example.sns.exception.ErrorCode;
+import com.example.sns.repository.PinRepository;
 import com.example.sns.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class PostService {
     private static final String MSG_POST_NOT_FOUND = "게시글을 찾을 수 없습니다.";
 
     private final PostRepository postRepository;
+    private final PinRepository pinRepository;
 
     /**
      * 게시글 목록 조회 (페이징·검색). 비로그인 허용.
@@ -57,12 +59,16 @@ public class PostService {
      */
     @Transactional
     public PostResponse create(PostCreateRequest request, User author) {
+        var pin = request.pinId() != null
+                ? pinRepository.findById(request.pinId()).orElse(null)
+                : null;
         Post post = Post.builder()
                 .author(author)
                 .title(request.title())
                 .content(request.content())
                 .latitude(request.latitude())
                 .longitude(request.longitude())
+                .pin(pin)
                 .build();
         Post saved = postRepository.save(post);
         log.info("게시글 작성: postId={}, authorId={}", saved.getId(), author.getId());

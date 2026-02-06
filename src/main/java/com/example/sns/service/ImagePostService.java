@@ -17,6 +17,7 @@ import com.example.sns.dto.response.ImagePostResponse;
 import com.example.sns.exception.BusinessException;
 import com.example.sns.exception.ErrorCode;
 import com.example.sns.repository.ImagePostRepository;
+import com.example.sns.repository.PinRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ public class ImagePostService {
 
     private final ImagePostRepository imagePostRepository;
     private final FileStorageService fileStorageService;
+    private final PinRepository pinRepository;
 
     private static final String STORAGE_SUB_DIR = "image-posts";
 
@@ -64,8 +66,9 @@ public class ImagePostService {
      */
     @Transactional
     public ImagePostResponse create(String title, String content, MultipartFile image,
-                                    Double latitude, Double longitude, User author) {
+                                    Double latitude, Double longitude, Long pinId, User author) {
         String storedPath = fileStorageService.storeImage(image, STORAGE_SUB_DIR);
+        var pin = pinId != null ? pinRepository.findById(pinId).orElse(null) : null;
 
         ImagePost post = ImagePost.builder()
                 .author(author)
@@ -74,6 +77,7 @@ public class ImagePostService {
                 .imageStoragePath(storedPath)
                 .latitude(latitude)
                 .longitude(longitude)
+                .pin(pin)
                 .build();
         ImagePost saved = imagePostRepository.save(post);
         log.info("이미지 게시글 작성: imagePostId={}, authorId={}", saved.getId(), author.getId());

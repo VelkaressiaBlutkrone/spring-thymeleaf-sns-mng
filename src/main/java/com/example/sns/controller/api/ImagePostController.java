@@ -95,7 +95,7 @@ public class ImagePostController {
         User author = authService.getCurrentUserEntity()
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
-        ImagePostResponse response = imagePostService.create(title, content, image, latitude, longitude, author);
+        ImagePostResponse response = imagePostService.create(title, content, image, latitude, longitude, pinId, author);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
