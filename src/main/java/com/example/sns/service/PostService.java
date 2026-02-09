@@ -91,6 +91,15 @@ public class PostService {
     }
 
     /**
+     * Pin에 연결된 게시글 목록. Step 12: 지도 Pin 클릭 시. 비로그인 가능.
+     */
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getByPinId(Long pinId, Pageable pageable) {
+        return postRepository.findByPin_Id(pinId, pageable)
+                .map(PostResponse::from);
+    }
+
+    /**
      * 반경(km) 내 게시글 조회. 비로그인 가능.
      * Step 11: 위도·경도가 있는 게시글만 반환.
      *

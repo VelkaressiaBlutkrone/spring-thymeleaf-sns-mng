@@ -14,8 +14,14 @@ import com.example.sns.domain.User;
  *
  * Step 9: 목록(페이징·검색)·상세·작성자별 조회.
  * Step 11: 반경 내 이미지 게시글 조회 (위치 있는 글만).
+ * Step 12: Pin별 이미지 게시글 목록.
  */
 public interface ImagePostRepository extends JpaRepository<ImagePost, Long> {
+
+    /**
+     * Pin에 연결된 이미지 게시글 목록. Step 12: 지도 Pin 클릭 시.
+     */
+    Page<ImagePost> findByPin_Id(Long pinId, Pageable pageable);
 
     /**
      * 제목 또는 내용에 키워드 포함 검색. 키워드 없으면 전체 조회.

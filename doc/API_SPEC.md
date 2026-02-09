@@ -323,6 +323,26 @@
 | Query | `lat`, `lng`, `radiusKm`, `page`, `size` |
 | Response | `200 OK` + `Page<PinResponse>` |
 
+### 6.7 Pin별 게시글 목록 (Step 12)
+
+| 항목 | 내용 |
+|------|------|
+| Method | `GET` |
+| URL | `/api/pins/{id}/posts` |
+| 인증 | 불필요 |
+| Query | `page`, `size` |
+| Response | `200 OK` + `Page<PostResponse>` |
+
+### 6.8 Pin별 이미지 게시글 목록 (Step 12)
+
+| 항목 | 내용 |
+|------|------|
+| Method | `GET` |
+| URL | `/api/pins/{id}/image-posts` |
+| 인증 | 불필요 |
+| Query | `page`, `size` |
+| Response | `200 OK` + `Page<ImagePostResponse>` |
+
 ---
 
 ## 7. 마이페이지 (Me)

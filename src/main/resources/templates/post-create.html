@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 작성</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 2rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        input, select, textarea { width: 100%; padding: 0.5rem; font-size: 1rem; }
+        textarea { min-height: 120px; }
+        #map { width: 100%; height: 300px; margin: 1rem 0; }
+        button { padding: 0.75rem 1.5rem; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 6px; }
+        .coord-hint { font-size: 0.9rem; color: #64748b; }
+        a { color: #2563eb; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <a th:href="@{/}">← 지도로 돌아가기</a>
+    <h1>게시글 작성</h1>
+    <form method="post" action="/posts">
+        <div class="form-group">
+            <label for="title">제목 *</label>
+            <input type="text" id="title" name="title" required maxlength="200" />
+        </div>
+        <div class="form-group">
+            <label for="content">내용 *</label>
+            <textarea id="content" name="content" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>위치 선택</label>
+            <p class="coord-hint">지도 클릭 시 해당 위치가 설정됩니다. 또는 Pin을 선택하세요.</p>
+            <div id="map"></div>
+            <input type="hidden" id="latitude" name="latitude" />
+            <input type="hidden" id="longitude" name="longitude" />
+        </div>
+        <div class="form-group">
+            <label for="pinId">연결할 Pin (선택)</label>
+            <select id="pinId" name="pinId">
+                <option value="">없음</option>
+                <option th:each="pin : ${pins.content}" th:value="${pin.id}" th:text="${'Pin #' + pin.id + ' (' + pin.latitude + ', ' + pin.longitude + ')'}">Pin</option>
+            </select>
+        </div>
+        <button type="submit">작성</button>
+    </form>
+
+    <script th:if="${kakaoMapScriptUrl != null and !kakaoMapScriptUrl.isEmpty()}" th:src="${kakaoMapScriptUrl}"></script>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof kakao !== 'undefined') {
+                kakao.maps.load(function() {
+                    var container = document.getElementById('map');
+                    if (!container) return;
+                    var map = new kakao.maps.Map(container, {
+                        center: new kakao.maps.LatLng(37.5665, 126.9780),
+                        level: 8
+                    });
+                    var marker = null;
+                    kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+                        var lat = mouseEvent.latLng.getLat();
+                        var lng = mouseEvent.latLng.getLng();
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lng;
+                        if (marker) marker.setMap(null);
+                        marker = new kakao.maps.Marker({ position: mouseEvent.latLng, map: map });
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

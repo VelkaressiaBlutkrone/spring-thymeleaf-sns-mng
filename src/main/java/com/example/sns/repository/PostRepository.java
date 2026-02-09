@@ -13,8 +13,14 @@ import com.example.sns.domain.Post;
  *
  * Step 8: 목록(페이징·검색)·상세.
  * Step 11: 반경 내 게시글 조회 (위치 있는 글만).
+ * Step 12: Pin별 게시글 목록 (지도 Pin 클릭 시).
  */
 public interface PostRepository extends JpaRepository<Post, Long> {
+
+    /**
+     * Pin에 연결된 게시글 목록. Step 12: 지도 Pin 클릭 시 관련 글 표시.
+     */
+    Page<Post> findByPin_Id(Long pinId, Pageable pageable);
 
     /**
      * 제목 또는 내용에 키워드 포함 검색. 키워드 없으면 전체 조회.

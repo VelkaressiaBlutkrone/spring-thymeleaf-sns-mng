@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.sns.aop.LogAccess;
+import com.example.sns.aop.ValidCheck;
 import com.example.sns.dto.request.SampleValidationRequest;
 import com.example.sns.exception.BusinessException;
 import com.example.sns.exception.ErrorCode;
@@ -26,6 +27,7 @@ import jakarta.validation.Valid;
 public class SampleController {
 
     @LogAccess
+    @ValidCheck
     @PostMapping("/validate")
     public ResponseEntity<Map<String, String>> validate(@Valid @RequestBody SampleValidationRequest request) {
         return ResponseEntity.ok(Map.of(

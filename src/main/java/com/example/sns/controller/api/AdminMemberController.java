@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.sns.aop.ValidCheck;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,6 +45,7 @@ public class AdminMemberController {
 
     @Operation(summary = "회원 추가", description = "관리자에 의한 회원 등록")
     @PostMapping
+    @ValidCheck
     public ResponseEntity<?> create(@Valid @RequestBody MemberJoinRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
     }

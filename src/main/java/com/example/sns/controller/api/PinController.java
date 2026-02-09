@@ -15,14 +15,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.sns.aop.ValidCheck;
 import com.example.sns.domain.User;
 import com.example.sns.dto.request.PinCreateRequest;
 import com.example.sns.dto.request.PinUpdateRequest;
+import com.example.sns.dto.response.ImagePostResponse;
 import com.example.sns.dto.response.PinResponse;
+import com.example.sns.dto.response.PostResponse;
 import com.example.sns.exception.BusinessException;
 import com.example.sns.exception.ErrorCode;
 import com.example.sns.service.AuthService;
+import com.example.sns.service.ImagePostService;
 import com.example.sns.service.PinService;
+import com.example.sns.service.PostService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,13 +41,15 @@ import lombok.RequiredArgsConstructor;
  * Step 10: Pin 생성/수정/삭제/목록(사용자별), 소유권 검증.
  * Step 11: 반경 조회(nearby) 구현 예정.
  */
-@Tag(name = "Pin", description = "지도 Pin CRUD, 반경 내 Pin 조회")
+@Tag(name = "Pin", description = "지도 Pin CRUD, 반경 내 Pin 조회, Pin별 게시글 목록")
 @RestController
 @RequestMapping("/api/pins")
 @RequiredArgsConstructor
 public class PinController {
 
     private final PinService pinService;
+    private final PostService postService;
+    private final ImagePostService imagePostService;
     private final AuthService authService;
 
     @Operation(summary = "Pin 목록", description = "로그인 사용자 본인 Pin 목록. 페이징")
@@ -66,6 +73,7 @@ public class PinController {
 
     @Operation(summary = "Pin 생성", description = "로그인 필수. 위도·경도·설명")
     @PostMapping
+    @ValidCheck
     public ResponseEntity<PinResponse> create(@Valid @RequestBody PinCreateRequest request) {
         User currentUser = authService.getCurrentUserEntity()
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
@@ -75,6 +83,7 @@ public class PinController {
 
     @Operation(summary = "Pin 수정", description = "로그인 필수, 소유자만")
     @PutMapping("/{id}")
+    @ValidCheck
     public ResponseEntity<PinResponse> update(@PathVariable Long id, @Valid @RequestBody PinUpdateRequest request) {
         User currentUser = authService.getCurrentUserEntity()
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
@@ -88,6 +97,22 @@ public class PinController {
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
         pinService.delete(id, currentUser);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Pin별 게시글 목록", description = "Pin에 연결된 게시글. 비로그인 가능. Step 12")
+    @GetMapping("/{id}/posts")
+    public ResponseEntity<Page<PostResponse>> getPostsByPin(@PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(postService.getByPinId(id, pageable));
+    }
+
+    @Operation(summary = "Pin별 이미지 게시글 목록", description = "Pin에 연결된 이미지 게시글. 비로그인 가능. Step 12")
+    @GetMapping("/{id}/image-posts")
+    public ResponseEntity<Page<ImagePostResponse>> getImagePostsByPin(@PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(imagePostService.getByPinId(id, pageable));
     }
 
     @Operation(summary = "반경 내 Pin 조회", description = "위도·경도·반경(km)으로 주변 Pin 조회. 비로그인 가능. Step 11")

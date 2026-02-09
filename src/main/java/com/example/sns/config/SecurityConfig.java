@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives(
-                                        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'")))
+                                        "default-src 'self'; script-src 'self' https://dapi.kakao.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://dapi.kakao.com")))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
@@ -71,12 +71,22 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/image-posts/*").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/image-posts/*").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/pins/nearby").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/pins/*/posts", "/api/pins/*/image-posts").permitAll()
                         .requestMatchers("/api/pins", "/api/pins/**").authenticated()
                         .requestMatchers("/", "/error", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/login").permitAll()
+                        .requestMatchers("/pins/*/posts", "/posts/*", "/image-posts/*").permitAll()
+                        .requestMatchers("/posts/create", "/image-posts/create").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/posts", "/image-posts").authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((HttpServletRequest request, HttpServletResponse response,
                                                   org.springframework.security.core.AuthenticationException authException) -> {
+                            String accept = request.getHeader("Accept");
+                            if (accept != null && accept.contains("text/html")) {
+                                response.sendRedirect("/login");
+                                return;
+                            }
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write("{\"code\":\"E002\",\"message\":\"인증이 필요합니다.\"}");

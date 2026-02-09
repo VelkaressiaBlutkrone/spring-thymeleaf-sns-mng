@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.sns.aop.ValidCheck;
 import com.example.sns.dto.request.LoginRequest;
 import com.example.sns.dto.response.LoginResponse;
 import com.example.sns.dto.response.MemberResponse;
@@ -40,6 +41,7 @@ public class AuthController {
 
     @Operation(summary = "로그인", description = "이메일·비밀번호로 로그인. 성공 시 Access Token(15분)+Refresh Token(Set-Cookie) 반환")
     @PostMapping("/login")
+    @ValidCheck
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request,
                                                HttpServletResponse response) {
         var result = authService.login(request);

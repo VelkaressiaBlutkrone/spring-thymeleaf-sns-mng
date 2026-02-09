@@ -24,9 +24,10 @@ app:
     issuer: test-issuer
     audience: test-audience
     secret-key: test-secret-key-min-256-bits-for-hs256-encoding
-  # Step 11: 테스트 시 지도 API 미사용
+  # Step 11, 12: 테스트 시 지도 API 미사용
   map:
     provider: none
+    kakao-js-app-key: ""
   upload:
     base-path: ./build/uploads-test
     allowed-mime-types:

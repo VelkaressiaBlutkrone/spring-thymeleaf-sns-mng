@@ -111,6 +111,7 @@ cd spring_thymleaf_map_sns_mng
 cd infra
 cp .env.example .env
 # .env 파일을 열어 필요한 값 수정 (JWT_SECRET_KEY, DB 비밀번호 등)
+# 지도 표시(Step 12): MAP_KAKAO_JS_APP_KEY (카카오 개발자 콘솔 → JavaScript 키)
 ```
 
 ### 2. 인프라 실행 (Docker)

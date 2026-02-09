@@ -12,10 +12,24 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class CookieUtil {
 
     private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+    private static final String ACCESS_TOKEN_COOKIE_NAME = "access_token";
     private static final int MAX_AGE_DELETE = 0;
     private static final String SAME_SITE_STRICT = "Strict";
 
     private CookieUtil() {
+    }
+
+    /**
+     * Access Token 쿠키 설정. Step 13: 웹 폼 인증용.
+     */
+    public static void setAccessTokenCookie(HttpServletResponse response, String value, int maxAgeSeconds, boolean secure) {
+        Cookie cookie = new Cookie(ACCESS_TOKEN_COOKIE_NAME, value);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(secure);
+        cookie.setPath("/");
+        cookie.setMaxAge(maxAgeSeconds);
+        cookie.setAttribute("SameSite", SAME_SITE_STRICT);
+        response.addCookie(cookie);
     }
 
     /**

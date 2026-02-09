@@ -144,6 +144,15 @@ public class ImagePostService {
     }
 
     /**
+     * Pin에 연결된 이미지 게시글 목록. Step 12: 지도 Pin 클릭 시. 비로그인 가능.
+     */
+    @Transactional(readOnly = true)
+    public Page<ImagePostResponse> getByPinId(Long pinId, Pageable pageable) {
+        return imagePostRepository.findByPin_Id(pinId, pageable)
+                .map(ImagePostResponse::from);
+    }
+
+    /**
      * 반경(km) 내 이미지 게시글 조회. 비로그인 가능.
      * Step 11: 위도·경도가 있는 이미지 게시글만 반환.
      *

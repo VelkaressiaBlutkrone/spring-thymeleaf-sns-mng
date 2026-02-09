@@ -77,6 +77,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(header) && header.startsWith(BEARER_PREFIX)) {
             return header.substring(BEARER_PREFIX.length()).trim();
         }
+        // Step 13: 웹 폼 요청용. 쿠키에서 access_token 읽기 (SameSite=Strict 권장)
+        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (jakarta.servlet.http.Cookie c : cookies) {
+                if ("access_token".equals(c.getName()) && StringUtils.hasText(c.getValue())) {
+                    return c.getValue().trim();
+                }
+            }
+        }
         return null;
     }
 

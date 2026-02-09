@@ -61,12 +61,14 @@ app:
     audience: ${JWT_AUDIENCE}
     secret-key: ${JWT_SECRET_KEY}
   # Step 11: 지도 API 추상화 (provider: none|google|kakao|naver)
+  # Step 12: kakao-js-app-key - 카카오맵 JavaScript API (프론트 지도 표시)
   map:
     provider: ${MAP_PROVIDER:none}
     timeout-seconds: ${MAP_TIMEOUT_SECONDS:5}
     retry-count: ${MAP_RETRY_COUNT:2}
     google-api-key: ${MAP_GOOGLE_API_KEY:}
     kakao-api-key: ${MAP_KAKAO_API_KEY:}
+    kakao-js-app-key: ${MAP_KAKAO_JS_APP_KEY:}
     naver-client-id: ${MAP_NAVER_CLIENT_ID:}
     naver-client-secret: ${MAP_NAVER_CLIENT_SECRET:}
   upload:

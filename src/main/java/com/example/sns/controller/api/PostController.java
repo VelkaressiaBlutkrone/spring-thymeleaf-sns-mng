@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.sns.aop.ValidCheck;
 import com.example.sns.domain.User;
 import com.example.sns.dto.request.PostCreateRequest;
 import com.example.sns.dto.request.PostUpdateRequest;
@@ -62,6 +63,7 @@ public class PostController {
 
     @Operation(summary = "게시글 작성", description = "로그인 필수. 제목·내용·위치·Pin 연결")
     @PostMapping
+    @ValidCheck
     public ResponseEntity<PostResponse> create(@Valid @RequestBody PostCreateRequest request) {
         User author = authService.getCurrentUserEntity()
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
@@ -71,6 +73,7 @@ public class PostController {
 
     @Operation(summary = "게시글 수정", description = "로그인 필수, 작성자만. 403: 타인 글")
     @PutMapping("/{id}")
+    @ValidCheck
     public ResponseEntity<PostResponse> update(@PathVariable Long id, @Valid @RequestBody PostUpdateRequest request) {
         User currentUser = authService.getCurrentUserEntity()
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));

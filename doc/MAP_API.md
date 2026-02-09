@@ -53,7 +53,17 @@ RULE 1.1: API Key·비밀정보는 환경 변수로만 주입.
 | 반경 내 게시글 | GET /api/posts/nearby | lat, lng, radiusKm, page, size |
 | 반경 내 이미지 게시글 | GET /api/image-posts/nearby | lat, lng, radiusKm, page, size |
 
-## 6. 로깅 (RULE 1.4.3)
+## 6. Step 12~13: 지도 웹 UI (프론트엔드)
+
+| 항목 | 내용 |
+|------|------|
+| 지도 JS | Kakao Maps JavaScript API (kakaoJsAppKey) |
+| 설정 | `app.map.kakao-js-app-key` (환경 변수 `MAP_KAKAO_JS_APP_KEY`) |
+| 용도 | 메인 지도, 마커, 인포윈도우, 게시글 작성 폼 위치 선택, 상세 지도·거리 |
+| 웹 페이지 | `/` (지도), `/login`, `/posts/create`, `/image-posts/create`, `/posts/{id}`, `/image-posts/{id}` |
+| 거리 계산 | 클라이언트 Haversine (post-detail-map.js), 사용자 위치→목적지 |
+
+## 7. 로깅 (RULE 1.4.3)
 
 - 외부 API 호출·실패 시 파라미터화 로깅 (`{}` placeholder)
 - 비밀정보(API Key, 토큰) 로그 출력 금지

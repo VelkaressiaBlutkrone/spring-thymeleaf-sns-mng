@@ -44,7 +44,13 @@ public record MapProperties(
         /**
          * Naver Client Secret (provider=naver 시 환경 변수 필수).
          */
-        String naverClientSecret
+        String naverClientSecret,
+
+        /**
+         * Kakao Maps JavaScript API App Key (Step 12: 프론트 지도 표시용).
+         * RULE 1.1: 환경 변수로 주입.
+         */
+        String kakaoJsAppKey
 ) {
     public MapProperties {
         if (provider == null) provider = "none";
