@@ -6,6 +6,15 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 
 # --------------------------------------------
+# Node / React / Vite (web/)
+# --------------------------------------------
+node_modules/
+web/dist/
+web/.vite/
+web/.cache/
+**/*.tsbuildinfo
+
+# --------------------------------------------
 # IDE
 # --------------------------------------------
 .idea/
@@ -100,7 +109,6 @@ mobile/ios/Flutter/Flutter.podspec
 # Flutter Android
 mobile/android/.gradle/
 mobile/android/local.properties
-mobile/android/**/gradle-wrapper.jar
 mobile/android/captures/
 mobile/android/.cxx/
 # Flutter Web
