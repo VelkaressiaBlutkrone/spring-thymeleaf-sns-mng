@@ -20,7 +20,7 @@
 | 3.1 계층 분리                  | ✅             | Controller→Service→Repository                                         |
 | 3.3 엔티티 직접 반환 금지      | ✅             | DTO(PostResponse, MemberResponse 등) 사용                             |
 | 3.5 AOP                        | ✅             | Validation·Access·Audit·ExceptionLogging, @Order, doc/AOP.md, 재throw |
-| 3.5.5 @Transactional Service만 | ✅             | Controller·Repository에 @Transactional 없음                           |
+| 3.5.7 @Transactional Service만 | ✅             | Controller·Repository에 @Transactional 없음                           |
 | 3.6 외부 라이브러리 관리       | ⏳             | Version Catalog 미적용 (권장)                                         |
 | 4.2.2 테스트 규칙              | ⚠️ 부분        | Given-When-Then·AssertJ: 일부 테스트 주석 미비                        |
 | 4.3 API 문서화                 | ✅             | Swagger/OpenAPI 설정                                                  |
@@ -49,7 +49,7 @@
 | 2.2.3 | GlobalExceptionHandler | ✅ 스택 트레이스 미노출, ErrorResponse 변환                  |
 | 1.6   | 보안 헤더              | ✅ HSTS, X-Content-Type-Options, CSP                         |
 | 3.5   | AOP                    | ✅ AccessLog, AuditLog, ExceptionLogging, @Order, doc/AOP.md |
-| 3.5.4 | 예외 재throw           | ✅ AOP에서 로깅 후 throw e                                   |
+| 3.5.6 | 예외 재throw           | ✅ AOP에서 로깅 후 throw e                                   |
 | 1.4.3 | 파라미터화 로깅        | ✅ `{}` placeholder 사용                                     |
 
 ### Step 3 — 패키지·엔티티·Repository
@@ -58,7 +58,7 @@
 | ----- | --------------------- | ------------------------------------------- |
 | 3.1   | 계층 구조             | ✅ controller/service/domain/repository/dto |
 | 3.3   | 엔티티 직접 반환 금지 | ✅ DTO 골격                                 |
-| 3.5.5 | @Transactional 위치   | ✅ Repository·Entity에 없음                 |
+| 3.5.7 | @Transactional 위치   | ✅ Repository·Entity에 없음                 |
 
 ### Step 4 — REST API 명세·인증 설계
 
@@ -112,7 +112,7 @@
 | RULE  | 항목                | 결과                                     |
 | ----- | ------------------- | ---------------------------------------- |
 | 2.3   | 트랜잭션 Service    | ✅ PostService @Transactional, readOnly  |
-| 3.5.5 | @Transactional 위치 | ✅ Service만                             |
+| 3.5.7 | @Transactional 위치 | ✅ Service만                             |
 | 1.2   | IDOR 방지           | ✅ isAuthor(), 403, 로깅                 |
 | 1.3   | 입력 검증           | ✅ @Valid, @ValidCheck PostCreateRequest |
 | 1.4.3 | 로깅                | ✅ CRUD·IDOR 시도 파라미터화             |
@@ -196,7 +196,7 @@
 | AccessLogAspect        | @annotation(LogAccess)    | 100    | ✅           | doc/AOP.md |
 
 - **3.5.2**: AOP 제거 시 시스템 정상 동작 확인됨.
-- **3.5.10**: doc/AOP.md에 Pointcut·목적·Order·예외 정책·제거 시 영향도 문서화됨.
+- **3.5.12**: doc/AOP.md에 Pointcut·목적·Order·예외 정책·제거 시 영향도 문서화됨.
 
 ---
 

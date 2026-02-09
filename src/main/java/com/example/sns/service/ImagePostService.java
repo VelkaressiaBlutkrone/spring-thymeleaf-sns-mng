@@ -6,7 +6,9 @@ import java.nio.file.Path;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  * 이미지 게시글 서비스.
  *
  * RULE 2.3: 트랜잭션 경계 Service 계층.
- * RULE 3.5.5: @Transactional Service 계층에만.
+ * RULE 3.5.7: @Transactional Service 계층에만.
  * RULE 1.2: IDOR 방지 - 수정·삭제 시 소유권 검증.
  * Step 9: Multipart 업로드·파일 저장·ImagePost CRUD.
  */
@@ -43,13 +45,29 @@ public class ImagePostService {
 
     private static final String STORAGE_SUB_DIR = "image-posts";
 
+    /** 공지 상단 노출용 정렬. */
+    private static final Sort NOTICE_FIRST_SORT = Sort.by(
+            Sort.Order.desc("notice"),
+            Sort.Order.desc("createdAt"));
+
     /**
      * 이미지 게시글 목록 조회 (페이징·검색). 비로그인 허용.
+     * Step 16: 공지 상단 노출.
      */
     @Transactional(readOnly = true)
     public Page<ImagePostResponse> getList(String keyword, Pageable pageable) {
-        return imagePostRepository.findAllByKeyword(keyword, pageable)
+        Pageable sorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), NOTICE_FIRST_SORT);
+        return imagePostRepository.findAllByKeyword(keyword, sorted)
                 .map(ImagePostResponse::from);
+    }
+
+    /**
+     * 관리자용 이미지 게시글 목록. Step 16: 페이징·검색·공지 상단.
+     * getList와 동일한 정렬(공지 우선) 적용.
+     */
+    @Transactional(readOnly = true)
+    public Page<ImagePostResponse> getListForAdmin(String keyword, Pageable pageable) {
+        return getList(keyword, pageable);
     }
 
     /**
@@ -181,5 +199,43 @@ public class ImagePostService {
     private ImagePost findById(Long id) {
         return imagePostRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, MSG_IMAGE_POST_NOT_FOUND));
+    }
+
+    /**
+     * 관리자용 이미지 게시글 수정. Step 16: 타인 글도 수정 가능.
+     */
+    @Transactional
+    public ImagePostResponse updateByAdmin(Long id, String title, String content, MultipartFile image) {
+        ImagePost post = findById(id);
+        String newPath = post.getImageStoragePath();
+        if (image != null && !image.isEmpty()) {
+            fileStorageService.deleteIfExists(post.getImageStoragePath());
+            newPath = fileStorageService.storeImage(image, STORAGE_SUB_DIR);
+        }
+        post.update(title, content, newPath);
+        log.info("관리자 이미지 게시글 수정: imagePostId={}", id);
+        return ImagePostResponse.from(post);
+    }
+
+    /**
+     * 관리자용 이미지 게시글 삭제. Step 16: 타인 글도 삭제 가능.
+     */
+    @Transactional
+    public void deleteByAdmin(Long id) {
+        ImagePost post = findById(id);
+        fileStorageService.deleteIfExists(post.getImageStoragePath());
+        imagePostRepository.delete(post);
+        log.info("관리자 이미지 게시글 삭제: imagePostId={}", id);
+    }
+
+    /**
+     * 공지 등록/해제. Step 16: 관리자 전용.
+     */
+    @Transactional
+    public ImagePostResponse setNotice(Long id, boolean notice) {
+        ImagePost post = findById(id);
+        post.setNotice(notice);
+        log.info("관리자 공지 설정: imagePostId={}, notice={}", id, notice);
+        return ImagePostResponse.from(post);
     }
 }

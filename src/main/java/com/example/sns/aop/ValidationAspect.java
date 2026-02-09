@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  * @ValidCheck 적용 메서드의 @Valid 파라미터를 일괄 검증한다.
  * @RequestBody 외 @PathVariable·@RequestParam 등 @Valid 대상도 통합 검증 (RULE 1.3).
  * 검증 실패 시 ConstraintViolationException → GlobalExceptionHandler가 ErrorResponse 변환.
- * 예외 기록 후 재throw (RULE 3.5.4).
+ * 예외 기록 후 재throw (RULE 3.5.6).
  *
  * @see ValidCheck
  * @see com.example.sns.exception.GlobalExceptionHandler#handleConstraintViolation

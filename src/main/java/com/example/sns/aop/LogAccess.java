@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Access Log AOP 적용 대상 메서드 표시.
  *
- * Annotation 기반 Pointcut 사용 (RULE 3.5.3).
+ * Annotation 기반 Pointcut 사용 (RULE 3.5.4).
  *
  * @see AccessLogAspect
  */

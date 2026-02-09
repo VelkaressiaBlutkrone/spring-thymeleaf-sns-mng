@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>관리자 - 회원 관리</title>
+    <title>관리자 - 이미지 게시글 관리</title>
     <style>
         body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; }
         h1 { margin-bottom: 1rem; }
@@ -17,25 +17,28 @@
         th, td { border: 1px solid #e2e8f0; padding: 0.75rem; text-align: left; }
         th { background: #f8fafc; font-weight: 600; }
         .message { color: #059669; margin-bottom: 1rem; }
+        .error { color: #dc2626; margin-bottom: 1rem; }
         .btn { padding: 0.25rem 0.5rem; font-size: 0.875rem; text-decoration: none; border-radius: 4px; }
         .btn-primary { background: #2563eb; color: white; }
         .btn-danger { background: #dc2626; color: white; border: none; cursor: pointer; }
+        .notice-badge { background: #f59e0b; color: white; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+        .thumb { max-width: 60px; max-height: 60px; object-fit: cover; }
     </style>
 </head>
 <body>
     <nav class="nav">
         <a th:href="@{/}">← 지도</a>
         <a th:href="@{/admin/members}">회원 관리</a>
-        <a th:href="@{/admin/members/new}">회원 추가</a>
         <a th:href="@{/admin/posts}">게시글 관리</a>
         <a th:href="@{/admin/image-posts}">이미지 게시글 관리</a>
     </nav>
 
     <p th:if="${message}" class="message" th:text="${message}"></p>
-    <h1>회원 관리</h1>
+    <p th:if="${error}" class="error" th:text="${error}"></p>
+    <h1>이미지 게시글 관리</h1>
 
-    <form th:action="@{/admin/members}" method="get" class="search-form">
-        <input type="text" name="keyword" th:value="${keyword}" placeholder="이메일·닉네임 검색" />
+    <form th:action="@{/admin/image-posts}" method="get" class="search-form">
+        <input type="text" name="keyword" th:value="${keyword}" placeholder="제목·내용 검색" />
         <input type="hidden" name="page" value="0" />
         <button type="submit">검색</button>
     </form>
@@ -44,23 +47,25 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>이메일</th>
-                <th>닉네임</th>
-                <th>역할</th>
-                <th>가입일</th>
+                <th>썸네일</th>
+                <th>제목</th>
+                <th>작성자</th>
+                <th>공지</th>
+                <th>작성일</th>
                 <th>작업</th>
             </tr>
         </thead>
         <tbody>
-            <tr th:each="m : ${members.content}">
-                <td th:text="${m.id}">1</td>
-                <td th:text="${m.email}">email</td>
-                <td th:text="${m.nickname}">닉네임</td>
-                <td th:text="${m.role}">USER</td>
-                <td th:text="${#temporals.format(m.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</td>
+            <tr th:each="p : ${posts.content}">
+                <td th:text="${p.id}">1</td>
+                <td><img th:src="${p.imageUrl}" alt="img" class="thumb" /></td>
+                <td th:text="${p.title}">제목</td>
+                <td th:text="${p.authorNickname}">닉네임</td>
+                <td><span th:if="${p.notice}" class="notice-badge">공지</span></td>
+                <td th:text="${#temporals.format(p.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</td>
                 <td>
-                    <a th:href="@{/admin/members/{id}(id=${m.id})}" class="btn btn-primary">수정</a>
-                    <form th:action="@{/admin/members/{id}/delete(id=${m.id})}" method="post" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                    <a th:href="@{/admin/image-posts/{id}(id=${p.id})}" class="btn btn-primary">수정</a>
+                    <form th:action="@{/admin/image-posts/{id}/delete(id=${p.id})}" method="post" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
                         <button type="submit" class="btn btn-danger">삭제</button>
                     </form>
                 </td>
@@ -68,15 +73,15 @@
         </tbody>
     </table>
 
-    <p th:if="${members.empty}">등록된 회원이 없습니다.</p>
+    <p th:if="${posts.empty}">등록된 이미지 게시글이 없습니다.</p>
 
-    <div th:if="${!members.empty}" style="margin-top:1rem;">
-        <span th:text="${'전체 ' + members.totalElements + '명'}"></span>
-        <span th:if="${members.number > 0}">
-            <a th:href="@{/admin/members(page=${members.number - 1}, size=${members.size}, keyword=${keyword})}">이전</a>
+    <div th:if="${!posts.empty}" style="margin-top:1rem;">
+        <span th:text="${'전체 ' + posts.totalElements + '건'}"></span>
+        <span th:if="${posts.number > 0}">
+            <a th:href="@{/admin/image-posts(page=${posts.number - 1}, size=${posts.size}, keyword=${keyword})}">이전</a>
         </span>
-        <span th:if="${members.number < members.totalPages - 1}">
-            <a th:href="@{/admin/members(page=${members.number + 1}, size=${members.size}, keyword=${keyword})}">다음</a>
+        <span th:if="${posts.number < posts.totalPages - 1}">
+            <a th:href="@{/admin/image-posts(page=${posts.number + 1}, size=${posts.size}, keyword=${keyword})}">다음</a>
         </span>
     </div>
 </body>

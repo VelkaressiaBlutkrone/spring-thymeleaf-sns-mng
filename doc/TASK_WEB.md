@@ -159,7 +159,7 @@
 **Constraints:**
 
 - RULE 2.2(공통 예외, 스택 트레이스 미노출), A02 Security Misconfiguration(1.6) 준수
-- **RULE 3.5(AOP)**: 횡단 관심사 전용, Pointcut 명시적·Annotation 우선, 예외 기록 후 재throw, 상태 변경 금지, @Order 명시, 문서화 필수
+- **RULE 3.5(AOP)**: 횡단 관심사 전용, Pointcut 패키지 기반·Annotation 제한적, 예외 기록 후 재throw, 상태 변경 금지, @Order 명시, 문서화 필수
 - 에러 발생 시 200 OK 반환 금지
 
 **Done When:**
@@ -205,7 +205,7 @@
 
 - RULE 3.1(Controller→Service→Repository 단방향), 3.3(엔티티 API 직접 반환 금지, N+1 대응 설계)
 - Domain이 Infra(Spring/JPA)에 과도히 종속되지 않도록 설계
-- **RULE 3.5.5**: `@Transactional`은 이 단계에서 Repository·Entity에 선언하지 않음 — Service 계층에서만 사용
+- **RULE 3.5.7**: `@Transactional`은 이 단계에서 Repository·Entity에 선언하지 않음 — Service 계층에서만 사용
 
 **Done When:**
 
@@ -213,7 +213,7 @@
 
 **Duration:** 5일
 
-**RULE Reference:** 3.1, 3.3, **3.5.5**, 4.4(주석), 1.4.3(로깅)
+**RULE Reference:** 3.1, 3.3, **3.5.7**, 4.4(주석), 1.4.3(로깅)
 
 ---
 
@@ -424,7 +424,7 @@
 **Constraints:**
 
 - RULE 1.2(인증·인가 분리, deny-by-default, 403 사용), 1.2.3(CORS 오설정 금지)
-- **RULE 3.5**: 보안/권한 검사용 커스텀 AOP를 쓸 경우 횡단 관심사만, Pointcut 명시·@Order·문서화 준수
+- **RULE 3.5**: 보안/권한 검사용 커스텀 AOP를 쓸 경우 횡단 관심사만, Pointcut 패키지/Annotation·@Order·문서화 준수
 
 **Done When:**
 
@@ -468,7 +468,7 @@
 **Constraints:**
 
 - RULE 2.1(API 책임 단위), 2.3(트랜잭션 Service), 1.2(IDOR 방지)
-- **RULE 3.5.5**: `@Transactional`은 Service 계층에만 선언(Controller·Repository 금지). 트랜잭션 AOP는 보조 역할만.
+- **RULE 3.5.7**: `@Transactional`은 Service 계층에만 선언(Controller·Repository 금지). 트랜잭션 AOP는 보조 역할만.
 
 **Done When:**
 
@@ -476,7 +476,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 2.1, 2.3, **2.3.2(트랜잭션·이벤트)**, 1.2, **3.5.5**, 1.4.3(로깅)
+**RULE Reference:** 2.1, 2.3, **2.3.2(트랜잭션·이벤트)**, 1.2, **3.5.7**, 1.4.3(로깅)
 
 ---
 
@@ -593,7 +593,7 @@
 **Constraints:**
 
 - RULE 3.4(외부 호출 Timeout), 3.2(프레임워크·외부 API 과의존 금지)
-- **RULE 3.5.8**: 반경 조회·대량 호출 등 성능 민감 구간에 AOP(로깅·메트릭) 적용 시 **적용 전 성능 테스트 필수**
+- **RULE 3.5.10**: 반경 조회·대량 호출 등 성능 민감 구간에 AOP(로깅·메트릭) 적용 시 **적용 전 성능 테스트 필수**
 
 **Done When:**
 
@@ -601,7 +601,7 @@
 
 **Duration:** 6일
 
-**RULE Reference:** 3.4, 3.2, **3.5.8**, 1.4.3(로깅)
+**RULE Reference:** 3.4, 3.2, **3.5.10**, 1.4.3(로깅)
 
 ---
 
@@ -1032,7 +1032,7 @@
 | 13   | 지도-게시글 연동·경로/거리             | ☑    |
 | 14   | 마이페이지·About                       | ☑    |
 | 15   | 관리자 회원 관리                       | ☑    |
-| 16   | 관리자 게시물·공지                     | ☐    |
+| 16   | 관리자 게시물·공지                     | ☑    |
 | 17   | 관리자 통계                            | ☐    |
 | 18   | 보안·CORS·Rate Limiting                | ☐    |
 | 19   | 테스트·문서·RULE 체크                  | ☐    |

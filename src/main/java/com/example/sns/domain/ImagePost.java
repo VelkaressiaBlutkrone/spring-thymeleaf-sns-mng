@@ -88,4 +88,12 @@ public class ImagePost extends BaseEntity {
     public boolean isAuthor(User user) {
         return user != null && author != null && author.getId().equals(user.getId());
     }
+
+    /**
+     * 공지 여부 설정. Step 16: 관리자 공지 등록/해제.
+     */
+    public void setNotice(boolean notice) {
+        this.notice = notice;
+        onUpdate();
+    }
 }

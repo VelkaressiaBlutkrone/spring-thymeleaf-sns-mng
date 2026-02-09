@@ -37,7 +37,7 @@ public class AccessLogAspect {
     }
 
     /**
-     * 접근 로그 기록 후 원본 실행. 예외 시 로깅 후 재throw (RULE 3.5.4).
+     * 접근 로그 기록 후 원본 실행. 예외 시 로깅 후 재throw (RULE 3.5.6).
      *
      * @param joinPoint 대상 메서드
      * @return 원본 메서드 반환값

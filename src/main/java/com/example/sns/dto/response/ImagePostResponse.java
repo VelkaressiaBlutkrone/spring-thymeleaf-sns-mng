@@ -20,6 +20,7 @@ public record ImagePostResponse(
         Double latitude,
         Double longitude,
         Long pinId,
+        boolean notice,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -39,6 +40,7 @@ public record ImagePostResponse(
                 post.getLatitude(),
                 post.getLongitude(),
                 post.getPin() != null ? post.getPin().getId() : null,
+                post.isNotice(),
                 post.getCreatedAt(),
                 post.getUpdatedAt()
         );

@@ -1,7 +1,9 @@
 package com.example.sns.service;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * 게시글 서비스.
  *
  * RULE 2.3: 트랜잭션 경계 Service 계층.
- * RULE 3.5.5: @Transactional Service 계층에만.
+ * RULE 3.5.7: @Transactional Service 계층에만.
  * RULE 1.2: IDOR 방지 - 수정·삭제 시 소유권 검증.
  */
 @Slf4j
@@ -35,13 +37,29 @@ public class PostService {
     private final PostRepository postRepository;
     private final PinRepository pinRepository;
 
+    /** 공지 상단 노출용 정렬 (순서: 공지 우선, 최신순). */
+    private static final Sort NOTICE_FIRST_SORT = Sort.by(
+            Sort.Order.desc("notice"),
+            Sort.Order.desc("createdAt"));
+
     /**
      * 게시글 목록 조회 (페이징·검색). 비로그인 허용.
+     * Step 16: 공지 상단 노출.
      */
     @Transactional(readOnly = true)
     public Page<PostResponse> getList(String keyword, Pageable pageable) {
-        return postRepository.findAllByKeyword(keyword, pageable)
+        Pageable sorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), NOTICE_FIRST_SORT);
+        return postRepository.findAllByKeyword(keyword, sorted)
                 .map(PostResponse::from);
+    }
+
+    /**
+     * 관리자용 게시글 목록. Step 16: 페이징·검색·공지 상단.
+     * getList와 동일한 정렬(공지 우선) 적용.
+     */
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getListForAdmin(String keyword, Pageable pageable) {
+        return getList(keyword, pageable);
     }
 
     /**
@@ -138,5 +156,40 @@ public class PostService {
         }
         postRepository.delete(post);
         log.info("게시글 삭제: postId={}, authorId={}", id, currentUser.getId());
+    }
+
+    /**
+     * 관리자용 게시글 수정. Step 16: 타인 글도 수정 가능.
+     */
+    @Transactional
+    public PostResponse updateByAdmin(Long id, PostUpdateRequest request) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, MSG_POST_NOT_FOUND));
+        post.update(request.title(), request.content());
+        log.info("관리자 게시글 수정: postId={}", id);
+        return PostResponse.from(post);
+    }
+
+    /**
+     * 관리자용 게시글 삭제. Step 16: 타인 글도 삭제 가능.
+     */
+    @Transactional
+    public void deleteByAdmin(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, MSG_POST_NOT_FOUND));
+        postRepository.delete(post);
+        log.info("관리자 게시글 삭제: postId={}", id);
+    }
+
+    /**
+     * 공지 등록/해제. Step 16: 관리자 전용.
+     */
+    @Transactional
+    public PostResponse setNotice(Long id, boolean notice) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, MSG_POST_NOT_FOUND));
+        post.setNotice(notice);
+        log.info("관리자 공지 설정: postId={}, notice={}", id, notice);
+        return PostResponse.from(post);
     }
 }

@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  * Pin 서비스.
  *
  * RULE 2.3: 트랜잭션 경계 Service 계층.
- * RULE 3.5.5: @Transactional Service 계층에만.
+ * RULE 3.5.7: @Transactional Service 계층에만.
  * RULE 1.2: IDOR 방지 - 수정·삭제 시 소유권 검증.
  * Step 10: Pin CRUD, 사용자별 목록.
  */

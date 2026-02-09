@@ -1,6 +1,6 @@
 # AOP 문서
 
-> RULE 3.5.10: AOP 추가 시 문서화 필수.
+> RULE 3.5.12: AOP 추가 시 문서화 필수.
 
 ## 개요
 
@@ -35,7 +35,7 @@
 
 ## 예외 처리 정책
 
-- **RULE 3.5.4 준수**: 모든 Aspect는 예외를 **기록만** 하고 **반드시 재throw** 한다.
+- **RULE 3.5.6 준수**: 모든 Aspect는 예외를 **기록만** 하고 **반드시 재throw** 한다.
 - 예외 판단·변환·return null 금지.
 - 예외 처리(ErrorResponse 변환)는 GlobalExceptionHandler가 담당.
 
