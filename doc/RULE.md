@@ -1402,6 +1402,156 @@ api.interceptors.request.use((config) => {
 });
 ```
 
+#### 7.2.3 폴더 구조 (Feature-based + Atomic Design)
+
+**Rule**: Feature-based 구조를 기본으로 하고, 공통 컴포넌트는 Atomic Design 계층(Atoms, Molecules, Organisms)을 적용한다.
+
+```text
+src/
+├── features/              // 기능별 (3~4 depth 제한)
+│   └── user/
+│       ├── components/    // atoms, molecules, organisms
+│       ├── hooks/
+│       ├── types.ts
+│       └── UserProfile.tsx
+├── common/                // 공유 컴포넌트 (UI, hooks, utils)
+│   ├── atoms/
+│   ├── molecules/
+│   └── organisms/
+├── assets/                // 이미지, 폰트
+├── styles/                // global CSS (Tailwind or CSS Modules)
+└── App.tsx
+```
+
+| 계층 | 예시 | 설명 |
+|------|------|------|
+| **Atoms** | Button, Input, Icon | 재사용성 최고, 스타일 최소 |
+| **Molecules** | SearchForm | Atoms 조합 |
+| **Organisms** | Header | Molecules + Atoms |
+| **Templates** | PageLayout | 레이아웃 뼈대 |
+| **Pages** | UserDashboard | 라우트 단위 최종 조합 |
+
+#### 7.2.4 컴포넌트·타입 구성 규칙
+
+**Rule**: Functional Component + Hooks만 사용(Class Component 금지), Props는 interface로 명시, 컴포넌트당 150줄 이하, 단일 책임 원칙(SRP).
+
+```tsx
+// ProfileHero.tsx
+interface ProfileHeroProps {
+  name: string;
+  avatarUrl?: string;
+  isLoading?: boolean;
+}
+
+const ProfileHero: React.FC<ProfileHeroProps> = ({ name, avatarUrl, isLoading }) => {
+  // 1. Hooks
+  const [count, setCount] = React.useState(0);
+
+  // 2. Variables (non-function)
+  const fullName = name.toUpperCase();
+
+  // 3. useEffect (별도 공백)
+
+  // 4. Functions (event handlers)
+  const handleClick = () => setCount(c => c + 1);
+
+  // 5. Early return
+  if (isLoading) return <Skeleton />;
+
+  // 6. JSX (로직과 빈 줄 분리)
+  return (
+    <div className="hero">
+      <img src={avatarUrl} alt={name} />
+      <h1>{fullName}</h1>
+      <button onClick={handleClick}>Count: {count}</button>
+    </div>
+  );
+};
+
+export default ProfileHero;
+```
+
+- **Component Type**: `React.FC<Props>` 또는 `function Component(props: Props): JSX.Element`
+- **Props 인터페이스**: `interface ButtonProps { variant: 'primary' | 'secondary'; size?: 'sm' | 'md' | 'lg'; onClick: () => void; }`
+- **Children**: `React.PropsWithChildren<{ title: string }>` 또는 `children: React.ReactNode` 명시
+- **Custom Hook**: `use` 접두사 필수 (`useAuth`, `useUser`)
+
+#### 7.2.5 JSX-TSX 구조 레벨 제한
+
+| Rule | 설명 |
+|------|------|
+| **Depth 제한** | JSX 중첩 3~4단계 초과 시 새 컴포넌트로 분리 |
+| **Early return** | if/else 중첩 금지, 조건부 렌더링은 early return |
+| **Fragment** | 불필요한 div 금지, `<>` 또는 `<Fragment>` 사용 |
+| **Props spreading** | `{...props}` 금지, 명시적 prop 전달 |
+| **Children prop** | `children`은 마지막 prop으로 배치 |
+
+#### 7.2.6 스타일링 방식
+
+| 방식 | Rule | 적용 상황 |
+|------|------|-----------|
+| **Tailwind CSS** | `className`에 utility-first, clsx/cn으로 조건부 | 빠른 프로토타이핑, 디자인 시스템 |
+| **CSS Modules** | `*.module.css`, `styles.hero` 형태 | 중대형 프로젝트, scoped 스타일 |
+| **Styled Components** | `createGlobalStyle`은 global만 | 동적 스타일(props 기반) |
+
+**Rule**: Tailwind + clsx + tailwind-merge 패턴 권장. `cn()` 유틸로 조건부 클래스 합성.
+
+```tsx
+// lib/utils.ts
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// 사용 예
+import { cn } from '@/lib/utils';
+
+const Button = ({ variant = 'primary' }) => (
+  <button className={cn(
+    'px-4 py-2 rounded',
+    variant === 'primary' ? 'bg-blue-500' : 'bg-gray-500'
+  )}>
+    Click
+  </button>
+);
+```
+
+#### 7.2.7 ESLint·Prettier 설정
+
+**Rule**: ESLint + Prettier 설정 시 `prettier`는 `extends` 마지막에 배치, React 17+ JSX transform·TypeScript 사용 시 `react/prop-types` off.
+
+```javascript
+// eslint.config.js 또는 .eslintrc.js
+module.exports = {
+  extends: [
+    'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react-hooks/recommended',
+    'prettier'  // Prettier 마지막
+  ],
+  rules: {
+    'react/react-in-jsx-scope': 'off',  // React 17+ JSX transform
+    'react/prop-types': 'off',          // TypeScript 사용 시
+    '@typescript-eslint/no-unused-vars': 'error',
+    'max-lines-per-function': ['warn', 150],
+    'max-depth': ['warn', 4]
+  },
+  settings: { react: { version: 'detect' } }
+};
+```
+
+#### 7.2.8 컴포넌트 export 순서
+
+```tsx
+// 파일 하단 권장 순서
+export { default } from './Component';
+export type { Props } from './Component';
+export * from './types';  // 필요 시
+```
+
 ---
 
 ### 7.3 Flutter (Mobile App)
@@ -1916,4 +2066,4 @@ ASVS 5.0(Application Security Verification Standard 5.0) 17개 챕터를 기반�
 ---
 
 > **마지막 업데이트**: 2026-02-09
-> **버전**: 1.0.8 (3.5 AOP 파트 보강: Spring AOP 설계 표준 통합 — 패키지 기반 Pointcut·Aspect 단일 책임·Advice 기준·금지 패턴·체크리스트)
+> **버전**: 1.0.9 (7.2 React 파트 보강: Feature-based·Atomic Design 폴더 구조, 컴포넌트·타입·JSX 규칙, Tailwind+cn 패턴, ESLint·Prettier)
