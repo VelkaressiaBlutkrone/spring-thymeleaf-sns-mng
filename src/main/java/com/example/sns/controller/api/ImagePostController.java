@@ -54,6 +54,18 @@ public class ImagePostController {
         return ResponseEntity.ok(imagePostService.getList(keyword, pageable));
     }
 
+    @Operation(summary = "반경 내 이미지 게시글 조회", description = "위도·경도·반경(km)으로 주변 이미지 게시글 조회. 비로그인 가능. Step 11")
+    @GetMapping("/nearby")
+    public ResponseEntity<Page<ImagePostResponse>> nearby(
+            @Parameter(description = "위도", required = true) @RequestParam double lat,
+            @Parameter(description = "경도", required = true) @RequestParam double lng,
+            @Parameter(description = "반경(km)") @RequestParam(defaultValue = "5") double radiusKm,
+            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(imagePostService.getNearby(lat, lng, radiusKm, pageable));
+    }
+
     @Operation(summary = "이미지 게시글 상세", description = "ID로 상세 조회")
     @GetMapping("/{id}")
     public ResponseEntity<ImagePostResponse> get(@PathVariable Long id) {

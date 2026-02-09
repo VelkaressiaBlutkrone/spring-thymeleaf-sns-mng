@@ -91,6 +91,23 @@ public class PostService {
     }
 
     /**
+     * 반경(km) 내 게시글 조회. 비로그인 가능.
+     * Step 11: 위도·경도가 있는 게시글만 반환.
+     *
+     * @param lat      중심 위도
+     * @param lng      중심 경도
+     * @param radiusKm 반경(km)
+     * @param pageable 페이징
+     * @return 반경 내 게시글 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getNearby(double lat, double lng, double radiusKm, Pageable pageable) {
+        log.debug("반경 내 게시글 조회: lat={}, lng={}, radiusKm={}", lat, lng, radiusKm);
+        return postRepository.findWithinRadius(radiusKm, lat, lng, pageable)
+                .map(PostResponse::from);
+    }
+
+    /**
      * 게시글 삭제. 작성자만. 타인 글 시 403.
      */
     @Transactional

@@ -90,14 +90,15 @@ public class PinController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "반경 내 Pin 조회", description = "위도·경도·반경(km)으로 주변 Pin 조회. 비로그인 가능. Step 11에서 구현")
+    @Operation(summary = "반경 내 Pin 조회", description = "위도·경도·반경(km)으로 주변 Pin 조회. 비로그인 가능. Step 11")
     @GetMapping("/nearby")
-    public ResponseEntity<?> nearby(
-            @Parameter(description = "위도") @RequestParam double lat,
-            @Parameter(description = "경도") @RequestParam double lng,
+    public ResponseEntity<Page<PinResponse>> nearby(
+            @Parameter(description = "위도", required = true) @RequestParam double lat,
+            @Parameter(description = "경도", required = true) @RequestParam double lng,
             @Parameter(description = "반경(km)") @RequestParam(defaultValue = "5") double radiusKm,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(pinService.getNearby(lat, lng, radiusKm, pageable));
     }
 }

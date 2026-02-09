@@ -179,6 +179,17 @@
 | 인증 | 로그인 필수, 작성자만 |
 | Response | `204 No Content` 또는 `403` |
 
+### 4.6 반경 내 게시글 조회 (Step 11)
+
+| 항목 | 내용 |
+|------|------|
+| Method | `GET` |
+| URL | `/api/posts/nearby` |
+| 인증 | 불필요 |
+| Query | `lat`, `lng`, `radiusKm`, `page`, `size` |
+| Response | `200 OK` + `Page<PostResponse>` |
+| 비고 | latitude·longitude가 있는 게시글만 반환 |
+
 ---
 
 ## 5. 이미지 게시글 (ImagePosts)
@@ -230,6 +241,17 @@
 | URL | `/api/image-posts/{id}` |
 | 인증 | 로그인 필수, 작성자만 |
 | Response | `204 No Content` 또는 `403` |
+
+### 5.6 반경 내 이미지 게시글 조회 (Step 11)
+
+| 항목 | 내용 |
+|------|------|
+| Method | `GET` |
+| URL | `/api/image-posts/nearby` |
+| 인증 | 불필요 |
+| Query | `lat`, `lng`, `radiusKm`, `page`, `size` |
+| Response | `200 OK` + `Page<ImagePostResponse>` |
+| 비고 | latitude·longitude가 있는 이미지 게시글만 반환 |
 
 ---
 
@@ -291,7 +313,7 @@
 | 인증 | 로그인 필수, 소유자만 |
 | Response | `204 No Content` 또는 `403` |
 
-### 6.6 반경 내 Pin 조회
+### 6.6 반경 내 Pin 조회 (Step 11)
 
 | 항목 | 내용 |
 |------|------|

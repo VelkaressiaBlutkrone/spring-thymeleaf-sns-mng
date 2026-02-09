@@ -105,6 +105,23 @@ public class PinService {
     }
 
     /**
+     * 반경(km) 내 Pin 조회. 비로그인 가능.
+     * Step 11: Haversine 공식으로 반경 내 Pin 목록 반환.
+     *
+     * @param lat      중심 위도
+     * @param lng      중심 경도
+     * @param radiusKm 반경(km)
+     * @param pageable 페이징
+     * @return 반경 내 Pin 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<PinResponse> getNearby(double lat, double lng, double radiusKm, Pageable pageable) {
+        log.debug("반경 내 Pin 조회: lat={}, lng={}, radiusKm={}", lat, lng, radiusKm);
+        return pinRepository.findWithinRadius(radiusKm, lat, lng, pageable)
+                .map(PinResponse::from);
+    }
+
+    /**
      * Pin 조회 (내부용). 소유권 검증 없음.
      */
     public Pin findPinById(Long id) {

@@ -60,6 +60,15 @@ app:
     issuer: ${JWT_ISSUER}
     audience: ${JWT_AUDIENCE}
     secret-key: ${JWT_SECRET_KEY}
+  # Step 11: 지도 API 추상화 (provider: none|google|kakao|naver)
+  map:
+    provider: ${MAP_PROVIDER:none}
+    timeout-seconds: ${MAP_TIMEOUT_SECONDS:5}
+    retry-count: ${MAP_RETRY_COUNT:2}
+    google-api-key: ${MAP_GOOGLE_API_KEY:}
+    kakao-api-key: ${MAP_KAKAO_API_KEY:}
+    naver-client-id: ${MAP_NAVER_CLIENT_ID:}
+    naver-client-secret: ${MAP_NAVER_CLIENT_SECRET:}
   upload:
     base-path: ${UPLOAD_BASE_PATH:./uploads}
     allowed-mime-types:

@@ -6,9 +6,10 @@
 
 ```text
 com.example.sns/
-├── config/           # 설정 (Security, JPA, QueryDSL 등)
+├── config/           # 설정 (Security, JPA, QueryDSL, MapProperties 등)
 ├── controller/       # REST API 핸들러
 ├── service/          # 비즈니스 로직 (트랜잭션 경계)
+│   └── map/          # 지도 API 추상화 (MapService, GoogleMapServiceImpl, NoOpMapService)
 ├── domain/           # 엔티티, Value Object
 ├── repository/       # JPA Repository 인터페이스
 ├── dto/
@@ -45,7 +46,7 @@ Controller → Service → Repository
 | UserRepository | 회원 CRUD, findByEmail |
 | PostRepository | 게시글 CRUD, 목록(공지 우선) |
 | ImagePostRepository | 이미지 게시글 CRUD, 목록 |
-| PinRepository | Pin CRUD, 사용자별 목록 |
+| PinRepository | Pin CRUD, 사용자별 목록, 반경 내 조회 (Step 11) |
 
 ## DTO (dto/)
 
@@ -58,4 +59,4 @@ Controller → Service → Repository
 
 ---
 
-> 최종 업데이트: 2026-02-04
+> 최종 업데이트: 2026-02-09

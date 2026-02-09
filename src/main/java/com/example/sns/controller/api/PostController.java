@@ -77,6 +77,18 @@ public class PostController {
         return ResponseEntity.ok(postService.update(id, request, currentUser));
     }
 
+    @Operation(summary = "반경 내 게시글 조회", description = "위도·경도·반경(km)으로 주변 게시글 조회. 비로그인 가능. Step 11")
+    @GetMapping("/nearby")
+    public ResponseEntity<Page<PostResponse>> nearby(
+            @Parameter(description = "위도", required = true) @RequestParam double lat,
+            @Parameter(description = "경도", required = true) @RequestParam double lng,
+            @Parameter(description = "반경(km)") @RequestParam(defaultValue = "5") double radiusKm,
+            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(postService.getNearby(lat, lng, radiusKm, pageable));
+    }
+
     @Operation(summary = "게시글 삭제", description = "로그인 필수, 작성자만. 403: 타인 글")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
