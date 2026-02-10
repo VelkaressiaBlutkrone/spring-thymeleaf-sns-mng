@@ -30,9 +30,9 @@
     </th:block>
     <div class="content" th:text="${post.content}">내용</div>
 
-    <script th:if="${kakaoMapScriptUrl != null and !kakaoMapScriptUrl.isEmpty()}" th:src="${kakaoMapScriptUrl}"></script>
-    <script th:src="@{/js/post-detail-map.js}"></script>
-    <script th:inline="javascript">
+    <script th:if="${kakaoMapScriptUrl != null and !kakaoMapScriptUrl.isEmpty()}" th:src="${kakaoMapScriptUrl}" th:attr="nonce=${cspNonce}"></script>
+    <script th:src="@{/js/post-detail-map.js}" th:attr="nonce=${cspNonce}"></script>
+    <script th:inline="javascript" th:attr="nonce=${cspNonce}">
         /*<![CDATA[*/
         (function() {
             var lat = /*[[${post.latitude}]]*/ null;

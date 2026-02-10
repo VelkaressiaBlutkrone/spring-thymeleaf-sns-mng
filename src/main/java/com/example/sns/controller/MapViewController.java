@@ -15,7 +15,7 @@ import com.example.sns.domain.User;
 import com.example.sns.dto.request.PostCreateRequest;
 import com.example.sns.exception.BusinessException;
 import com.example.sns.exception.ErrorCode;
-import com.example.sns.config.MapProperties;
+import com.example.sns.config.KakaoMapKeyResolver;
 import com.example.sns.service.AuthService;
 import com.example.sns.service.ImagePostService;
 import com.example.sns.service.PinService;
@@ -39,7 +39,7 @@ public class MapViewController {
     private final ImagePostService imagePostService;
     private final PinService pinService;
     private final AuthService authService;
-    private final MapProperties mapProperties;
+    private final KakaoMapKeyResolver kakaoMapKeyResolver;
 
     /**
      * Pin에 연결된 게시글·이미지 게시글 목록. Step 12: Pin 클릭 시 이동.
@@ -142,7 +142,8 @@ public class MapViewController {
     }
 
     private void addMapScriptUrl(Model model) {
-        String key = mapProperties.kakaoJsAppKey() != null ? mapProperties.kakaoJsAppKey() : "";
+        String key = kakaoMapKeyResolver.resolve();
+        model.addAttribute("kakaoJsAppKey", key);
         model.addAttribute("kakaoMapScriptUrl",
                 !key.isEmpty() ? "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + key + "&autoload=false" : "");
     }

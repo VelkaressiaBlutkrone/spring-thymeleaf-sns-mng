@@ -4,7 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import com.example.sns.config.MapProperties;
+import com.example.sns.config.KakaoMapKeyResolver;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,11 +16,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class HomeController {
 
-    private final MapProperties mapProperties;
+    private final KakaoMapKeyResolver kakaoMapKeyResolver;
 
     @GetMapping("/")
     public String home(Model model) {
-        String key = mapProperties.kakaoJsAppKey() != null ? mapProperties.kakaoJsAppKey() : "";
+        String key = kakaoMapKeyResolver.resolve();
         model.addAttribute("kakaoJsAppKey", key);
         model.addAttribute("kakaoMapScriptUrl",
                 !key.isEmpty() ? "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + key + "&autoload=false" : "");

@@ -1,0 +1,13 @@
+# Redis·외부 DB 없이 로컬 실행 시 사용. spring.profiles.include=standalone 으로 로드.
+spring:
+  config:
+    activate:
+      on-profile: standalone
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  session:
+    store-type: none
+  jpa:
+    hibernate:
+      ddl-auto: create-drop

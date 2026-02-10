@@ -5,16 +5,18 @@ spring:
       on-profile: dev
 
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+    # DB_URL 미설정 시 H2 인메모리 (로컬 실행). MySQL 사용 시 DB_URL·DB_DRIVER=com.mysql.cj.jdbc.Driver 설정.
+    url: ${DB_URL:jdbc:h2:mem:devdb;MODE=MySQL;DB_CLOSE_DELAY=-1}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
     hikari:
       initialization-fail-timeout: ${DB_INIT_FAIL_TIMEOUT:-1}
 
   jpa:
+    # 로컬(H2) 기본: create-drop. MySQL 등 운영 DB 사용 시 JPA_DDL_AUTO=validate 로 설정.
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:validate}
+      ddl-auto: ${JPA_DDL_AUTO:create-drop}
     properties:
       hibernate:
         format_sql: ${HIBERNATE_FORMAT_SQL:false}
@@ -22,7 +24,7 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST}
+      host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 
@@ -53,13 +55,14 @@ logging:
 # RULE 6.1.4, 6.5: JWT 토큰 유효기간·issuer·audience (Step 5, 6)
 app:
   cookie:
-    secure: ${COOKIE_SECURE:true}
+    secure: ${COOKIE_SECURE:false}
   jwt:
     access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
     refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:7}
-    issuer: ${JWT_ISSUER}
-    audience: ${JWT_AUDIENCE}
-    secret-key: ${JWT_SECRET_KEY}
+    # 로컬 실행 시 env 미설정 가능. 운영 시 반드시 환경 변수로 설정.
+    issuer: ${JWT_ISSUER:local-issuer}
+    audience: ${JWT_AUDIENCE:local-audience}
+    secret-key: ${JWT_SECRET_KEY:local-secret-key-min-256-bits-for-hs256-encoding}
   # Step 11: 지도 API 추상화 (provider: none|google|kakao|naver)
   # Step 12: kakao-js-app-key - 카카오맵 JavaScript API (프론트 지도 표시)
   map:

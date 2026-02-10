@@ -51,8 +51,8 @@
         <button type="submit">작성</button>
     </form>
 
-    <script th:if="${kakaoMapScriptUrl != null and !kakaoMapScriptUrl.isEmpty()}" th:src="${kakaoMapScriptUrl}"></script>
-    <script th:inline="javascript">
+    <script th:if="${kakaoMapScriptUrl != null and !kakaoMapScriptUrl.isEmpty()}" th:src="${kakaoMapScriptUrl}" th:attr="nonce=${cspNonce}"></script>
+    <script th:inline="javascript" th:attr="nonce=${cspNonce}">
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof kakao !== 'undefined') {
                 kakao.maps.load(function() {
