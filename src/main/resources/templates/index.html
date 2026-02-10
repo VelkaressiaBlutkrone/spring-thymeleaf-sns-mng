@@ -41,13 +41,14 @@
     </div>
 
     <!-- Step 12: 카카오맵 JS API. appkey는 서버에서 주입. RULE 1.1: 키는 환경변수. -->
-    <script th:if="${kakaoMapScriptUrl != null and !kakaoMapScriptUrl.isEmpty()}" th:src="${kakaoMapScriptUrl}" th:attr="nonce=${cspNonce}"></script>
-    <script th:src="@{/js/map.js}" th:attr="nonce=${cspNonce}"></script>
+    <!-- 키/API 베이스는 map.js 보다 먼저 설정해야 map.js 로드 시 읽을 수 있음. -->
     <script th:inline="javascript" th:attr="nonce=${cspNonce}">
         /*<![CDATA[*/
         window.MAP_KAKAO_APP_KEY = /*[[${kakaoJsAppKey}]]*/ '';
         window.MAP_API_BASE = /*[[@{/api}]]*/ '/api';
         /*]]>*/
     </script>
+    <script th:if="${kakaoMapScriptUrl != null and !kakaoMapScriptUrl.isEmpty()}" th:src="${kakaoMapScriptUrl}" th:attr="nonce=${cspNonce}"></script>
+    <script th:src="@{/js/map.js}" th:attr="nonce=${cspNonce}"></script>
 </body>
 </html>

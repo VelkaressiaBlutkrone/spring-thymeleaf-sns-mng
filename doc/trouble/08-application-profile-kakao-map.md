@@ -78,6 +78,28 @@ Schema validation: missing table [image_posts]
 
 ## 2. 카카오맵 API 키
 
+### 2.0 실행 구조와 키 적용 경로 (API Key 반영 안 될 때 확인)
+
+**키가 전달되는 경로:**
+
+1. **설정 로드**: `application.properties` → `spring.profiles.active` 기본값이 `dev,local,standalone` 이므로 활성 프로파일이 dev + local + standalone.
+2. **키 값**: `application-local.yml`(profile=local)의 `app.map.kakao-js-app-key` 가 dev의 `${MAP_KAKAO_JS_APP_KEY:}` 보다 나중에 적용되어 사용됨.
+3. **해석**: `KakaoMapKeyResolver.resolve()` → `MapProperties.kakaoJsAppKey()` → 없으면 환경 변수 `MAP_KAKAO_JS_APP_KEY` → 없으면 JVM `-DMAP_KAKAO_JS_APP_KEY=...`.
+4. **뷰**: `HomeController`(/) 및 `MapViewController`가 `kakaoJsAppKey`, `kakaoMapScriptUrl`을 모델에 넣고, `index.html` 등에서 `window.MAP_KAKAO_APP_KEY`와 스크립트 URL로 주입.
+
+**키가 비어 있을 때 확인할 것 (순서대로):**
+
+| 순서 | 확인 항목 | 조치 |
+|------|-----------|------|
+| 1 | 기동 로그에 `카카오맵 API 키 미설정` WARN 여부 | 나오면 키가 비어 있는 상태로 기동된 것. 아래 2~4 확인. |
+| 2 | `application.properties` 의 `spring.profiles.active` 기본값 | 기본이 `dev,local,standalone` 이어야 함. IDE에서 Active profiles를 `dev`만 넣으면 local이 빠져 키 미적용 → `dev,local,standalone` 입력 또는 비워두기. |
+| 3 | `src/main/resources/application-local.yml` 존재 및 `app.map.kakao-js-app-key` 값 | 없으면 예시는 `application-local.example.yml` 참고해 생성. |
+| 4 | IDE Run Configuration에서 Active profiles | 비워두면 기본값(dev,local,standalone) 적용. `dev`만 넣으면 local 미포함 → **dev,local,standalone** 으로 입력. |
+| 5 | 환경 변수 / VM 옵션 | 환경 변수 `MAP_KAKAO_JS_APP_KEY` 또는 VM 옵션 `-DMAP_KAKAO_JS_APP_KEY=발급받은키` 로 우회 가능. |
+| 6 | 카카오 개발자 콘솔 | JavaScript 키 발급 후 **도메인**에 `http://localhost:8080` 등록. |
+
+---
+
 ### 2.1 지도가 안 나오고 "카카오맵 API 키가 필요합니다"만 표시
 
 **원인:**
@@ -97,9 +119,10 @@ Schema validation: missing table [image_posts]
    - `spring.profiles.include=local` 이 있으므로 **dev** 기동 시 **local** 프로파일과 함께 로드됨.
    - `spring.config.import=optional:file:./application-local.yml` 이 있으면 **프로젝트 루트**의 동일 파일도 로드됨.
 
-2. **환경 변수 사용**
-   - `MAP_KAKAO_JS_APP_KEY=발급받은_JavaScript_키` 설정.
-   - `KakaoMapKeyResolver` 가 설정 파일 값을 먼저 보고, 없으면 이 환경 변수를 사용함.
+2. **환경 변수 또는 VM 옵션**
+   - 환경 변수: `MAP_KAKAO_JS_APP_KEY=발급받은_JavaScript_키`
+   - VM 옵션(IDE): `-DMAP_KAKAO_JS_APP_KEY=발급받은_JavaScript_키`
+   - `KakaoMapKeyResolver` 는 설정 파일 → 환경 변수 → 시스템 프로퍼티 순으로 사용함.
 
 3. **카카오 개발자 콘솔**
    - JavaScript 키 발급 후, **도메인**에 `http://localhost:8080` 등 로컬 주소 등록 필요.
