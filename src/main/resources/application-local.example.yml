@@ -1,0 +1,30 @@
+# 로컬 전용 설정 예시. 복사 후 application-local.yml 로 저장 (.gitignore 대상).
+# 환경 변수(DB_URL, REDIS_HOST, JWT_* 등) 없이 실행 시 아래가 적용되어 H2 메모리 DB + Redis 미사용으로 기동.
+# MySQL/Redis를 쓰려면 application-local.yml 에서 datasource·redis·session 관련 블록을 제거하고 환경 변수만 설정.
+spring:
+  config:
+    activate:
+      on-profile: local
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  datasource:
+    url: jdbc:h2:mem:devdb;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  session:
+    store-type: none
+
+app:
+  cookie:
+    secure: false
+  jwt:
+    issuer: local-issuer
+    audience: local-audience
+    secret-key: local-secret-key-min-256-bits-for-hs256-encoding
+  map:
+    kakao-js-app-key: ""  # 카카오 개발자 콘솔 JavaScript 키 (선택)

@@ -13,6 +13,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -105,6 +106,15 @@ public class GlobalExceptionHandler {
         log.warn("Access denied: {}", e.getMessage());
         ErrorResponse response = ErrorResponse.of(ErrorCode.FORBIDDEN);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    /**
+     * 정적 리소스 없음 (favicon.ico 등). 브라우저 기본 요청으로 ERROR 로그 방지.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException e) {
+        log.debug("No static resource: {}", e.getResourcePath());
+        return ResponseEntity.notFound().build();
     }
 
     /**

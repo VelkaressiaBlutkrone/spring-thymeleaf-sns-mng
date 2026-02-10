@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 통계</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        h1 { margin-bottom: 1rem; }
+        .nav { margin-bottom: 1.5rem; }
+        .nav a { margin-right: 1rem; color: #2563eb; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .range-form { margin-bottom: 1.5rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .range-form input[type="date"] { padding: 0.5rem; }
+        .range-form button { padding: 0.5rem 1rem; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 6px; }
+        .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: #f8fafc; }
+        .card h2 { margin: 0 0 0.5rem 0; font-size: 1rem; color: #475569; }
+        .card .value { font-size: 1.5rem; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        th, td { border: 1px solid #e2e8f0; padding: 0.75rem; text-align: left; }
+        th { background: #f1f5f9; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a th:href="@{/}">← 지도</a>
+        <a th:href="@{/admin/members}">회원 관리</a>
+        <a th:href="@{/admin/members/new}">회원 추가</a>
+        <a th:href="@{/admin/posts}">게시글 관리</a>
+        <a th:href="@{/admin/image-posts}">이미지 게시글 관리</a>
+        <a th:href="@{/admin/stats}">통계</a>
+    </nav>
+
+    <h1>관리자 통계</h1>
+
+    <form th:action="@{/admin/stats}" method="get" class="range-form">
+        <label>기간</label>
+        <input type="date" name="startDate" th:value="${startDate}" required />
+        <span>~</span>
+        <input type="date" name="endDate" th:value="${endDate}" required />
+        <button type="submit">조회</button>
+    </form>
+
+    <div class="card">
+        <h2>가입 통계</h2>
+        <div class="value" th:text="${signupStats.totalCount + '명'}">0명</div>
+    </div>
+
+    <div class="card">
+        <h2>로그인 통계</h2>
+        <div>로그인 수: <span class="value" th:text="${loginStats.loginCount}">0</span></div>
+        <div>활성 사용자 수: <span class="value" th:text="${loginStats.activeUsers}">0</span></div>
+    </div>
+
+    <div class="card">
+        <h2>글 통계 (일별)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>일반 게시글</th>
+                    <th>이미지 게시글</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${postStats.items}">
+                    <td th:text="${item.periodLabel}">날짜</td>
+                    <td th:text="${item.postCount}">0</td>
+                    <td th:text="${item.imagePostCount}">0</td>
+                </tr>
+            </tbody>
+        </table>
+        <p th:if="${postStats.items.isEmpty()}" style="margin-top:0.5rem;">해당 기간 데이터가 없습니다.</p>
+    </div>
+</body>
+</html>

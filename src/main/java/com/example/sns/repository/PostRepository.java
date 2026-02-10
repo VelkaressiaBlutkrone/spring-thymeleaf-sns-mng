@@ -1,5 +1,8 @@
 package com.example.sns.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -66,4 +69,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             nativeQuery = true)
     Page<Post> findWithinRadius(@Param("radiusKm") double radiusKm, @Param("lat") double lat, @Param("lng") double lng,
                                 Pageable pageable);
+
+    /**
+     * 기간 내 게시글 수를 일별로 집계. Step 17. (MySQL/H2 DATE() 호환)
+     */
+    @Query(value = "SELECT DATE(created_at), COUNT(*) FROM posts WHERE created_at BETWEEN :start AND :end GROUP BY DATE(created_at)",
+            nativeQuery = true)
+    List<Object[]> countByCreatedAtBetweenGroupByDay(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

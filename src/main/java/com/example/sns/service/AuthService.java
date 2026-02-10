@@ -14,6 +14,8 @@ import com.example.sns.dto.response.LoginResponse;
 import com.example.sns.dto.response.MemberResponse;
 import com.example.sns.exception.BusinessException;
 import com.example.sns.exception.ErrorCode;
+import com.example.sns.domain.LoginLog;
+import com.example.sns.repository.LoginLogRepository;
 import com.example.sns.repository.UserRepository;
 import com.example.sns.service.auth.JwtService;
 import com.example.sns.service.auth.TokenStore;
@@ -34,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final LoginLogRepository loginLogRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
@@ -63,6 +66,8 @@ public class AuthService {
         long refreshTtlSeconds = (long) jwtProperties.getRefreshTtlDays() * 24 * 60 * 60;
         String refreshPayload = user.getId() + ":" + user.getRole().name();
         tokenStore.saveRefreshToken(refreshJti, refreshPayload, refreshTtlSeconds);
+
+        loginLogRepository.save(LoginLog.of(user));
 
         log.info("로그인 성공: userId={}, email={}", user.getId(), user.getEmail());
         return new LoginResult(

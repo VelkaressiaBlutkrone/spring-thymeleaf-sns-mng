@@ -1,5 +1,6 @@
 package com.example.sns.repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -45,4 +46,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
         String trimmed = keyword.trim();
         return findByEmailContainingOrNicknameContaining(trimmed, trimmed, pageable);
     }
+
+    /**
+     * 기간 내 가입자 수. Step 17: 관리자 가입 통계.
+     */
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }
