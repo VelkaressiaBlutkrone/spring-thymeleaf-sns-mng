@@ -1,29 +1,22 @@
 # Application 프로파일 및 카카오맵 관련 문제
 
-본 문서는 Spring Boot **application 프로파일**(dev/local/standalone) 설정과 **카카오맵 API 키·CSP 인라인 스크립트** 관련 문제를 정리합니다.
+본 문서는 Spring Boot **application 프로파일**(dev/prod) 설정과 **카카오맵 API 키·CSP 인라인 스크립트** 관련 문제를 정리합니다.
 
 ---
 
 ## 1. Application 프로파일
 
-### 1.1 `spring.profiles.include`를 프로파일 전용 파일에 두면 에러
+### 1.1 프로파일 구조
 
-**에러 메시지:**
+| 구분 | 파일 | 비고 |
+|------|------|------|
+| 루트 | `application.yml` | `spring.profiles.active`, 공통 설정 |
+| 프로파일 | `application-dev.yml` | 개발: H2, Redis 미사용 |
+| 프로파일 | `application-prod.yml` | 운영: MySQL, Redis |
+| import | `spring.config.import=optional:file:./application-local.yml` | 프로젝트 루트의 `application-local.yml` 오버라이드 (선택) |
 
-```text
-InvalidConfigDataPropertyException: Property 'spring.profiles.include' imported from location
-'class path resource [application-dev.yml]' is invalid in a profile specific resource
-```
-
-**원인:**
-
-- Spring Boot에서는 **프로파일 전용 파일**(`application-dev.yml`, `application-local.yml` 등) 안에 `spring.profiles.include`를 선언할 수 없음.
-- 프로파일 전용 리소스에서 허용되지 않는 속성으로 간주됨.
-
-**해결 방법:**
-
-- `spring.profiles.include`는 **루트 설정 파일**에만 둠.
-  - `src/main/resources/application.properties` 에서 `spring.profiles.include=local,standalone` 등으로 설정.
+- **dev** 기동 시: H2 인메모리, Redis 미사용, 세션 none
+- **prod** 기동 시: MySQL·Redis 환경 변수 필수
 
 ---
 
@@ -44,35 +37,20 @@ Schema validation: missing table [image_posts]
 
 **해결 방법:**
 
-1. **로컬에서 환경 변수 없이 실행하려면**
+1. **개발에서 환경 변수 없이 실행하려면**
    - `application-dev.yml` 에 이미 **기본값**이 있음:
      - `url: ${DB_URL:jdbc:h2:mem:devdb;MODE=MySQL;DB_CLOSE_DELAY=-1}`
      - `driver-class-name: ${DB_DRIVER:org.h2.Driver}`
      - `username: ${DB_USERNAME:sa}`, `password: ${DB_PASSWORD:}`
-   - `spring.profiles.include=local,standalone` 으로 **standalone** 프로파일이 로드되면 Redis 미사용·세션 none으로 기동 가능.
-   - `JPA_DDL_AUTO` 기본값이 `create-drop` 이므로 H2 메모리 DB에 테이블 자동 생성.
+   - dev 프로파일은 Redis 미사용·세션 none으로 기동 가능.
 
 2. **MySQL 사용 시**
    - 환경 변수 설정: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DRIVER=com.mysql.cj.jdbc.Driver`
    - 운영 DB에서는 `JPA_DDL_AUTO=validate` 로 설정 권장.
 
 3. **application-local.yml (선택)**
-   - `.gitignore` 대상인 `application-local.yml` 에 DB/Redis/JWT 오버라이드를 두면, 환경 변수 없이도 H2 + Redis 제외로 실행 가능.
+   - `.gitignore` 대상인 `application-local.yml` 에 DB/JWT 오버라이드를 두면, 개발 시 추가 설정 가능.
    - 예시는 `application-local.example.yml` 참고.
-
----
-
-### 1.3 프로파일·설정 파일 로드 순서
-
-| 구분 | 파일 | 비고 |
-|------|------|------|
-| 루트 | `application.properties` | `spring.profiles.active`, `spring.profiles.include` 여기서만 허용 |
-| 프로파일 | `application-dev.yml` | dev 활성 시 로드, DB/JWT 등 기본값 포함 |
-| 프로파일 | `application-standalone.yml` | Redis 제외, session none, ddl-auto create-drop |
-| 프로파일 | `application-local.yml` | 비공개(.gitignore). 카카오맵 키·로컬 오버라이드 |
-| import | `spring.config.import=optional:file:./application-local.yml` | 프로젝트 루트의 `application-local.yml` 도 로드 가능 |
-
-- **dev** 기동 시: `dev` + `local` + `standalone` 이 모두 활성되며, 나중에 로드된 프로파일이 이전 값을 덮어씀.
 
 ---
 
@@ -82,8 +60,8 @@ Schema validation: missing table [image_posts]
 
 **키가 전달되는 경로:**
 
-1. **설정 로드**: `application.properties` → `spring.profiles.active` 기본값이 `dev,local,standalone` 이므로 활성 프로파일이 dev + local + standalone.
-2. **키 값**: `application-local.yml`(profile=local)의 `app.map.kakao-js-app-key` 가 dev의 `${MAP_KAKAO_JS_APP_KEY:}` 보다 나중에 적용되어 사용됨.
+1. **설정 로드**: `application.yml` → `spring.profiles.active` 기본값이 `dev` 이므로 dev 프로파일 로드.
+2. **키 값**: `application-local.yml`(optional import)의 `app.map.kakao-js-app-key` 가 dev의 `${MAP_KAKAO_JS_APP_KEY:}` 보다 나중에 적용되어 사용됨.
 3. **해석**: `KakaoMapKeyResolver.resolve()` → `MapProperties.kakaoJsAppKey()` → 없으면 환경 변수 `MAP_KAKAO_JS_APP_KEY` → 없으면 JVM `-DMAP_KAKAO_JS_APP_KEY=...`.
 4. **뷰**: `HomeController`(/) 및 `MapViewController`가 `kakaoJsAppKey`, `kakaoMapScriptUrl`을 모델에 넣고, `index.html` 등에서 `window.MAP_KAKAO_APP_KEY`와 스크립트 URL로 주입.
 
@@ -92,9 +70,9 @@ Schema validation: missing table [image_posts]
 | 순서 | 확인 항목 | 조치 |
 |------|-----------|------|
 | 1 | 기동 로그에 `카카오맵 API 키 미설정` WARN 여부 | 나오면 키가 비어 있는 상태로 기동된 것. 아래 2~4 확인. |
-| 2 | `application.properties` 의 `spring.profiles.active` 기본값 | 기본이 `dev,local,standalone` 이어야 함. IDE에서 Active profiles를 `dev`만 넣으면 local이 빠져 키 미적용 → `dev,local,standalone` 입력 또는 비워두기. |
-| 3 | `src/main/resources/application-local.yml` 존재 및 `app.map.kakao-js-app-key` 값 | 없으면 예시는 `application-local.example.yml` 참고해 생성. |
-| 4 | IDE Run Configuration에서 Active profiles | 비워두면 기본값(dev,local,standalone) 적용. `dev`만 넣으면 local 미포함 → **dev,local,standalone** 으로 입력. |
+| 2 | `application.yml` 의 `spring.profiles.active` 기본값 | 기본이 `dev` 이어야 함. |
+| 3 | `application-local.yml` 존재 및 `app.map.kakao-js-app-key` 값 | 없으면 예시는 `application-local.example.yml` 참고해 프로젝트 루트에 생성. |
+| 4 | IDE Run Configuration에서 Active profiles | 비워두면 기본값(dev) 적용. |
 | 5 | 환경 변수 / VM 옵션 | 환경 변수 `MAP_KAKAO_JS_APP_KEY` 또는 VM 옵션 `-DMAP_KAKAO_JS_APP_KEY=발급받은키` 로 우회 가능. |
 | 6 | 카카오 개발자 콘솔 | JavaScript 키 발급 후 **도메인**에 `http://localhost:8080` 등록. |
 
@@ -110,14 +88,13 @@ Schema validation: missing table [image_posts]
 **해결 방법:**
 
 1. **application-local.yml 사용 (권장)**
-   - `src/main/resources/application-local.yml` 또는 프로젝트 루트 `./application-local.yml` 에 다음 추가:
+   - `application-local.example.yml` 을 복사해 `application-local.yml` 로 저장 (프로젝트 루트):
      ```yaml
      app:
        map:
          kakao-js-app-key: "발급받은_JavaScript_키"
      ```
-   - `spring.profiles.include=local` 이 있으므로 **dev** 기동 시 **local** 프로파일과 함께 로드됨.
-   - `spring.config.import=optional:file:./application-local.yml` 이 있으면 **프로젝트 루트**의 동일 파일도 로드됨.
+   - `spring.config.import=optional:file:./application-local.yml` 이 있으면 **프로젝트 루트**의 동일 파일이 자동 로드됨.
 
 2. **환경 변수 또는 VM 옵션**
    - 환경 변수: `MAP_KAKAO_JS_APP_KEY=발급받은_JavaScript_키`
@@ -162,10 +139,9 @@ a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline exe
 
 | 현상 | 확인할 곳 | 조치 |
 |------|------------|------|
-| `spring.profiles.include` invalid in profile resource | application-dev.yml 등 프로파일 전용 파일 | `spring.profiles.include` 를 application.properties 로 이동 |
-| jdbcUrl `${DB_URL}` 그대로 전달 | 환경 변수 DB_URL | application-dev.yml 기본값(H2) 사용 또는 env 설정, standalone 프로파일로 Redis 제외 |
-| missing table [image_posts] | JPA ddl-auto | dev 기본값 create-drop 유지 또는 standalone 에서 create-drop 확인 |
-| 지도 안 나옴 / API 키 필요 메시지 | app.map.kakao-js-app-key | application-local.yml 또는 MAP_KAKAO_JS_APP_KEY 설정, local 프로파일·config.import 확인 |
+| jdbcUrl `${DB_URL}` 그대로 전달 | 환경 변수 DB_URL | application-dev.yml 기본값(H2) 사용 또는 env 설정 |
+| missing table [image_posts] | JPA ddl-auto | dev 기본값 create-drop 유지 |
+| 지도 안 나옴 / API 키 필요 메시지 | app.map.kakao-js-app-key | application-local.yml 또는 MAP_KAKAO_JS_APP_KEY 설정, config.import 확인 |
 | CSP로 인라인 스크립트 차단 | script-src, nonce | CspNonceFilter·CspNonceAdvice·템플릿 nonce 속성 적용 여부 확인 |
 
 ---
@@ -174,4 +150,4 @@ a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline exe
 
 - [MAP_API.md](../MAP_API.md) - 지도 API 명세
 - [SERVER_STARTUP_GUIDE.md](../SERVER_STARTUP_GUIDE.md) - 서버 구동 및 프로파일
-- [application-local.example.yml](../../src/main/resources/application-local.example.yml) - 로컬 설정 예시
+- [application-local.example.yml](../../src/main/resources/application-local.example.yml) - 로컬 오버라이드 예시

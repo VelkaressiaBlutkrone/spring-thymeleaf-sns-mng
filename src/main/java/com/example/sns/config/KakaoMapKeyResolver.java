@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 카카오맵 JavaScript API 키 조회.
  * <p>우선순위: application-local.yml (profile local) → 환경 변수 MAP_KAKAO_JS_APP_KEY → JVM 시스템 프로퍼티 MAP_KAKAO_JS_APP_KEY.
- * 로컬 실행 시 spring.profiles.active 기본값(dev,local,standalone)에 local 이 포함되어 application-local.yml 이 로드되어야 키가 적용됨.
+ * 로컬 실행 시 dev 프로파일 + optional:file:./application-local.yml 오버라이드로 카카오맵 키 적용.
  */
 @Slf4j
 @Component

@@ -6,7 +6,7 @@
 
 | RULE                           | Step 1~15 준수 | 비고                                                                  |
 | ------------------------------ | -------------- | --------------------------------------------------------------------- |
-| 1.1 비밀정보 관리              | ⚠️ 주의        | local JWT secret 기본값 존재 (prod는 env 주입)                        |
+| 1.1 비밀정보 관리              | ⚠️ 주의        | dev JWT secret 기본값 존재 (prod는 env 주입)                         |
 | 1.2 인증·인가                  | ✅             | deny-by-default, 401/403, CORS allow-list, IDOR 검증                  |
 | 1.2.4 인증·인가 테스트         | ✅             | AuthController, AdminSecurity, PostController 401/403 테스트          |
 | 1.3 입력 검증                  | ✅             | @Valid, @ValidCheck, Controller 단 검증                               |
@@ -24,7 +24,7 @@
 | 3.6 외부 라이브러리 관리       | ⏳             | Version Catalog 미적용 (권장)                                         |
 | 4.2.2 테스트 규칙              | ⚠️ 부분        | Given-When-Then·AssertJ: 일부 테스트 주석 미비                        |
 | 4.3 API 문서화                 | ✅             | Swagger/OpenAPI 설정                                                  |
-| 5.1 설정 분리                  | ✅             | application-local/dev/prod 분리                                       |
+| 5.1 설정 분리                  | ✅             | application-dev/prod 분리                                              |
 | 5.2 Fallback                   | ✅             | Redis 실패 시 FallbackTokenStore                                      |
 | 6.1~6.5 JWT                    | ✅             | iss/aud/jti, 15분 Access, Redis Refresh, 블랙리스트                   |
 
@@ -37,7 +37,7 @@
 | RULE  | 항목               | 결과                                          |
 | ----- | ------------------ | --------------------------------------------- |
 | 1.1   | 비밀정보 환경 변수 | ✅ application-\*.yml에 플레이스홀더/환경변수 |
-| 5.1   | 환경별 설정 분리   | ✅ local/dev/prod 골격                        |
+| 5.1   | 환경별 설정 분리   | ✅ dev/prod 골격                               |
 | 1.4.3 | 로깅 골격          | ✅ logging.level, file, logback.rollingpolicy |
 | 3.1   | 계층 분리          | ✅ doc/ARCHITECTURE, ERD                      |
 
@@ -218,7 +218,7 @@
 
 | 항목                       | 내용                                                                                                                                     | 권장                                       |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| 1.1 local JWT secret       | application-local.yml에 기본 secret-key                                                                                                  | prod는 env 필수. local도 가능하면 env 권장 |
+| 1.1 dev JWT secret         | application-dev.yml에 기본 secret-key                                                                                                    | prod는 env 필수. dev도 가능하면 env 권장   |
 | 4.2.2 Given-When-Then 주석 | Step 19에서 AuthControllerTest, AdminSecurityTest, PostControllerTest, SampleControllerTest에 `// given`, `// when`, `// then` 적용 완료 | ✅                                         |
 
 ### 6.2 Step 18 완료 항목 (웹 보안·CORS·Rate Limiting)

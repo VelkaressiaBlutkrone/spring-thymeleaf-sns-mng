@@ -71,6 +71,7 @@ dependencies {
      * =============================== */
     runtimeOnly 'com.mysql:mysql-connector-j'  // 운영 환경 (MySQL)
     implementation 'com.h2database:h2'         // 개발 환경 (H2) - H2 Console 사용을 위해 implementation
+    implementation 'org.springframework.boot:spring-boot-h2console'  // Spring Boot 4: H2 콘솔 별도 모듈
 
     /* ===============================
      * Redis - Redisson (분산 락)

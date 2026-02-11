@@ -29,6 +29,13 @@ spring:
   session:
     store-type: ${SESSION_STORE_TYPE:redis}
 
+# 운영 환경: API 문서·Swagger UI 비활성화 (SpringDoc 경고 대응)
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 server:
   port: ${SERVER_PORT:8080}
 

@@ -84,7 +84,7 @@
 
 **Scope:**
 
-- 포함: Gradle·모듈 셋업, 아키텍처 다이어그램, ERD(User, Post, ImagePost, Pin, Location, Post↔Pin), 환경별 `application-*.yml` 골격(local/dev/prod)
+- 포함: Gradle·모듈 셋업, 아키텍처 다이어그램, ERD(User, Post, ImagePost, Pin, Location, Post↔Pin), 환경별 `application-*.yml` 골격(dev/prod)
 - 제외: 실제 비즈니스 코드 구현, 외부 서비스(Redis/MySQL) 상세 튜닝
 
 **Instructions:**
@@ -92,7 +92,7 @@
 - Gradle·Java 21·Spring Boot 4.0.2 기반 프로젝트/모듈 구조 확인·정리
 - 전체 시스템 아키텍처 다이어그램 작성(웹/모바일·Backend·DB·Redis·지도 API)
 - ERD 설계: User, Post, ImagePost, Pin, Location, Post↔Pin 연관 관계
-- `application-local.yml`, `application-dev.yml`, `application-prod.yml` 골격 작성(비밀정보는 플레이스홀더 또는 환경 변수 참조만)
+- `application-dev.yml`, `application-prod.yml` 골격 작성(비밀정보는 플레이스홀더 또는 환경 변수 참조만)
 - **로깅 (RULE 1.4.3)**: 환경별 `logging.level`, `logging.file`, `logback.rollingpolicy` 골격 포함
 
 **Output Format:**

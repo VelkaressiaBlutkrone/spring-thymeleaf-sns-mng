@@ -1,6 +1,6 @@
 /**
- * Axios 인스턴스 (TASK_WEB Step 1).
- * 요청 시 Authorization 헤더, 401 시 clearAuth.
+ * Axios 인스턴스 (TASK_WEB Step 1, 2).
+ * 요청 시 Authorization 헤더, 401 시 Refresh 시도 후 재요청 (RULE 6.1~6.5).
  */
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/store/authStore';
@@ -28,9 +28,39 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 apiClient.interceptors.response.use(
   (res) => res,
   async (err) => {
-    if (err.response?.status === 401) {
-      useAuthStore.getState().clearAuth();
+    const originalRequest = err.config;
+
+    if (err.response?.status === 401 && !originalRequest._retry) {
+      const isRefresh = typeof originalRequest.url === 'string' && originalRequest.url.includes('/api/auth/refresh');
+      if (isRefresh) {
+        useAuthStore.getState().clearAuth();
+        redirectToLogin();
+        return Promise.reject(err);
+      }
+
+      originalRequest._retry = true;
+      try {
+        const res = await axios.post<{ accessToken: string }>(
+          `${baseURL || ''}/api/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+        const newToken = res.data.accessToken;
+        useAuthStore.getState().setAccessToken(newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return apiClient(originalRequest);
+      } catch {
+        useAuthStore.getState().clearAuth();
+        redirectToLogin();
+        return Promise.reject(err);
+      }
     }
     return Promise.reject(err);
   }
 );
+
+function redirectToLogin() {
+  if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
+}

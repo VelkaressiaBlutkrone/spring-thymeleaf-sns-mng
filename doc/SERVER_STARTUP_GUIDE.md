@@ -19,28 +19,31 @@
 
 프로젝트는 개발 환경과 운영 환경을 분리하여 관리합니다:
 
-- **로컬/개발 환경 (local, dev)**: H2 인메모리 또는 환경 변수 기반
+- **개발 환경 (dev)**: H2 인메모리, Redis 미사용, 세션 none (환경 변수 없이 실행 가능)
 - **운영 환경 (prod)**: MySQL + Redis (환경 변수 주입)
 
 ### 1.1 프로파일 구조
 
 프로젝트는 다음 설정 파일로 구성됩니다:
 
-- `application.properties` 또는 `application.yml`: 공통 설정, 기본 프로파일
-- `application-local.yml` / `application-dev.yml`: 로컬/개발 환경 (H2 또는 환경 변수)
+- `application.yml`: 공통 설정, 기본 프로파일
+- `application-dev.yml`: 개발 환경 (H2, Redis 미사용)
 - `application-prod.yml`: 운영 환경 (MySQL, Redis - 환경 변수 주입)
+- `application-local.yml` (선택, .gitignore): 프로젝트 루트에 두면 오버라이드 적용 (예: 카카오맵 키)
 
-### 1.2 로컬/개발 환경 (local, dev)
+### 1.2 개발 환경 (dev)
 
 #### 기본 프로파일
 
-`application.properties`에서 기본 프로파일이 설정되어 있습니다:
+`application.yml`에서 기본 프로파일이 설정되어 있습니다:
 
-```properties
-spring.profiles.active=${SPRING_PROFILES_ACTIVE:local}
+```yaml
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 ```
 
-환경 변수 `SPRING_PROFILES_ACTIVE`가 없으면 `local`(또는 `dev`)이 사용됩니다.
+환경 변수 `SPRING_PROFILES_ACTIVE`가 없으면 `dev`가 사용됩니다.
 
 #### H2 인메모리 DB 사용 시
 
@@ -82,7 +85,7 @@ spring:
 #### 개발 환경 실행 방법
 
 ```bash
-# 기본 프로파일( local / dev )로 실행
+# 기본 프로파일(dev)로 실행
 ./gradlew bootRun
 
 # 명시적으로 프로파일 지정

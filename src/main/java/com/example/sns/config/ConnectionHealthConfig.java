@@ -3,6 +3,7 @@ package com.example.sns.config;
 import javax.sql.DataSource;
 
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -46,9 +47,10 @@ public class ConnectionHealthConfig {
 
     /**
      * Redis 연결 검증: ping 수행.
-     * 성공 시 INFO, 실패 시 ERROR 로깅. 실패해도 throw 하지 않음 (서버 기동 유지).
+     * dev 프로파일은 Redis 미사용이므로 StringRedisTemplate 없음 → 빈 생성 안 함.
      */
     @Bean
+    @ConditionalOnBean(StringRedisTemplate.class)
     public ApplicationRunner redisConnectionHealthLogger(StringRedisTemplate redisTemplate) {
         return args -> {
             try {

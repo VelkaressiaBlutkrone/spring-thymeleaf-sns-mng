@@ -4,19 +4,21 @@
 
 개발/로컬 환경에서 H2 인메모리 데이터베이스를 사용하는 경우 H2 Console로 접속할 수 있습니다.
 
-### 접속 정보 (예시)
+### 접속 정보 (dev 환경)
 
-| 항목 | 값 |
-|------|------|
-| URL | `http://localhost:8080/h2-console` (Spring Boot 기본) |
-| JDBC URL | `jdbc:h2:mem:{dbname}` (application-*.yml에서 확인) |
-| Driver Class | `org.h2.Driver` |
-| Username | `sa` |
-| Password | (비워두기) |
+| 항목         | 값                                               |
+| ------------ | ------------------------------------------------ |
+| 브라우저 URL | `http://localhost:8080/h2-console`               |
+| JDBC URL     | `jdbc:h2:mem:devdb;MODE=MySQL;DB_CLOSE_DELAY=-1` |
+| Driver Class | `org.h2.Driver`                                  |
+| Username     | `sa`                                             |
+| Password     | (비워두기)                                       |
+
+> **중요**: JDBC URL은 application-dev.yml과 **동일**해야 합니다. URL이 다르면 별도 인메모리 DB가 생성되어 기동 중인 앱의 데이터와 연결되지 않습니다.
 
 ### 설정 예시
 
-`application-dev.yml` 또는 `application-local.yml`:
+`application-dev.yml`:
 
 ```yaml
 spring:
@@ -125,7 +127,7 @@ kill -9 <PID>
 
 ### 3. 포트 변경
 
-`application.properties` 또는 환경 변수:
+`application.yml` 또는 환경 변수:
 
 ```properties
 server.port=8081
