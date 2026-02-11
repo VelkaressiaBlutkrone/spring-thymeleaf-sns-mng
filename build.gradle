@@ -38,7 +38,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
     /* ===============================
      * API 문서 (OpenAPI 3 / Swagger) — Spring Boot 4.x 공식 호환

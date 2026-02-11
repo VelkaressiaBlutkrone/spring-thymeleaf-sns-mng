@@ -216,34 +216,44 @@
 
 ### 6.1 주의 (Attention)
 
-| 항목                       | 내용                                                                        | 권장                                       |
-| -------------------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
-| 1.1 local JWT secret       | application-local.yml에 기본 secret-key                                     | prod는 env 필수. local도 가능하면 env 권장 |
-| 4.2.2 Given-When-Then 주석 | Step 19에서 AuthControllerTest, AdminSecurityTest, PostControllerTest, SampleControllerTest에 `// given`, `// when`, `// then` 적용 완료 | ✅ |
+| 항목                       | 내용                                                                                                                                     | 권장                                       |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 1.1 local JWT secret       | application-local.yml에 기본 secret-key                                                                                                  | prod는 env 필수. local도 가능하면 env 권장 |
+| 4.2.2 Given-When-Then 주석 | Step 19에서 AuthControllerTest, AdminSecurityTest, PostControllerTest, SampleControllerTest에 `// given`, `// when`, `// then` 적용 완료 | ✅                                         |
 
 ### 6.2 Step 18 완료 항목 (웹 보안·CORS·Rate Limiting)
 
-| 항목 | 결과 |
-| ---- | ---- |
-| CORS allow-list | ✅ 허용 오리진만 설정, `*` 미사용. dev 기본값 localhost:8080/5173, prod는 CORS_ALLOWED_ORIGINS 환경 변수 |
-| Rate Limiting | ✅ 로그인·가입·토큰 갱신에 Bucket4j 적용 (IP 기준). 429 + Retry-After 반환 |
-| 비밀정보·에러 | ✅ GlobalExceptionHandler 스택 트레이스 미노출, ErrorResponse 통일 |
-| 로깅 1.4.1~1.4.3 | ✅ 파라미터화 로깅, Rate limit 초과 시 WARN 로그(IP 마스킹) |
+| 항목                   | 결과                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| CORS allow-list        | ✅ 허용 오리진만 설정, `*` 미사용. dev 기본값 localhost:8080/5173, prod는 CORS_ALLOWED_ORIGINS 환경 변수                             |
+| Rate Limiting          | ✅ 로그인·가입·토큰 갱신에 Bucket4j 적용 (IP 기준). 429 + Retry-After 반환                                                           |
+| 비밀정보·에러          | ✅ GlobalExceptionHandler 스택 트레이스 미노출, ErrorResponse 통일                                                                   |
+| 로깅 1.4.1~1.4.3       | ✅ 파라미터화 로깅, Rate limit 초과 시 WARN 로그(IP 마스킹)                                                                          |
 | RULE 5.3 긴급 비활성화 | ⏳ 점검 완료: 핵심 기능(로그인·가입·토큰)은 Rate Limit으로 과도 호출 차단. Feature Toggle/Kill Switch는 운영 요구 시 별도 도입 권장. |
 
 ### 6.3 Step 19 완료 항목 (테스트·문서·RULE 체크)
 
-| 항목 | 결과 |
-| ---- | ---- |
-| Given-When-Then·@DisplayName | ✅ AuthControllerTest, AdminSecurityTest, PostControllerTest, SampleControllerTest에 3줄 주석 및 @DisplayName 적용 |
-| AssertJ·BDDMockito | ✅ MemberServiceTest 등 단위 테스트에서 사용 |
-| 인증·인가 테스트 1.2.4 | ✅ 401: AuthControllerTest(me), AdminSecurityTest(admin), PostControllerTest(create). 403: AdminSecurityTest(ROLE_USER), PostControllerTest(타인 글 수정/삭제) |
-| Rate Limit 429 테스트 | ✅ AuthControllerTest login_rateLimit초과시_429_및_RetryAfter_반환 |
-| Swagger | ✅ 공개 API @Operation·@Tag 정리, OpenAPI 설명에 Rate Limiting(429) 반영 |
-| AOP RULE 3.5 | ✅ doc/AOP.md 존재, Pointcut·@Order·예외 재throw·제거 시 영향도 문서화 |
-| 로깅 RULE 1.4.3 | ✅ SLF4J, 파라미터화 로깅, 민감정보 미출력 점검 완료 |
+| 항목                         | 결과                                                                                                                                                           |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Given-When-Then·@DisplayName | ✅ AuthControllerTest, AdminSecurityTest, PostControllerTest, SampleControllerTest에 3줄 주석 및 @DisplayName 적용                                             |
+| AssertJ·BDDMockito           | ✅ MemberServiceTest 등 단위 테스트에서 사용                                                                                                                   |
+| 인증·인가 테스트 1.2.4       | ✅ 401: AuthControllerTest(me), AdminSecurityTest(admin), PostControllerTest(create). 403: AdminSecurityTest(ROLE_USER), PostControllerTest(타인 글 수정/삭제) |
+| Rate Limit 429 테스트        | ✅ AuthControllerTest login*rateLimit초과시\_429*및*RetryAfter*반환                                                                                            |
+| Swagger                      | ✅ 공개 API @Operation·@Tag 정리, OpenAPI 설명에 Rate Limiting(429) 반영                                                                                       |
+| AOP RULE 3.5                 | ✅ doc/AOP.md 존재, Pointcut·@Order·예외 재throw·제거 시 영향도 문서화                                                                                         |
+| 로깅 RULE 1.4.3              | ✅ SLF4J, 파라미터화 로깅, 민감정보 미출력 점검 완료                                                                                                           |
 
-### 6.4 향후 적용 (Step 20)
+### 6.4 Step 20 완료 항목 (배포 설정·최종 점검)
+
+| 항목                   | 결과                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| application-prod.yml   | ✅ DB·Redis·JWT·CORS·Rate Limit·Upload·로깅 모두 환경 변수 참조                                        |
+| 배포 가이드            | ✅ doc/DEPLOYMENT.md: 런타임(Java 21, MySQL, Redis), 환경 변수 목록, 기동·헬스체크                     |
+| RULE 5.3 긴급 비활성화 | ✅ DEPLOYMENT.md 6장: Rate Limit·Fallback 현행, Kill Switch 도입 시 문서화 권장                        |
+| Flutter 연동 문서      | ✅ doc/FLUTTER_API_INTEGRATION.md: REST 구조, JWT Bearer, Refresh Token Secure Storage, 지도 연동 예시 |
+| 로깅 application-prod  | ✅ 로그 레벨·파일 경로·롤링 정책 반영 확인(DEPLOYMENT.md 5장)                                          |
+
+### 6.5 향후 적용 (유지보수)
 
 | RULE                  | 적용 시점                                                          |
 | --------------------- | ------------------------------------------------------------------ |
@@ -255,5 +265,5 @@
 ---
 
 > **최종 업데이트**: 2026-02-11
-> **점검 범위**: TASK_SERVER.md Step 1~19 (Step 19 테스트·문서·RULE 체크 포함)
+> **점검 범위**: TASK_SERVER.md Step 1~20 (Step 20 배포 설정·최종 점검 포함)
 > **RULE 문서 버전**: 1.0.7 (2.1.4 URI 설계, 3.6 외부 라이브러리, 7.1.3 Spring Boot REST URI)

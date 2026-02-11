@@ -425,6 +425,8 @@ docker compose --profile app up -d
 
 ## 10. 참고 문서
 
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - **배포 가이드**: 운영 환경 변수 목록, 기동·헬스체크, RULE 5.3 (Step 20)
+- [FLUTTER_API_INTEGRATION.md](./FLUTTER_API_INTEGRATION.md) - Flutter REST·인증·지도 연동 예시 (Step 20)
 - [DEVELOPMENT_ENVIRONMENT.md](./DEVELOPMENT_ENVIRONMENT.md) - 로컬 개발환경 세팅
 - [SERVER_STARTUP_GUIDE.md](./SERVER_STARTUP_GUIDE.md) - 서버 구동 및 프로파일별 DB 설정
 - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - 일반 문제 해결

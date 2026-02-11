@@ -645,6 +645,8 @@
 
 **RULE Reference:** 1.5.6, 1.3, 1.4.3(로깅)
 
+**참고:** Thymeleaf 뷰/화면은 제거됨. 웹 UI는 TASK_WEB(React)에서 담당.
+
 ---
 
 ## Step 13 — 지도-게시글 연동·경로/거리
@@ -729,6 +731,8 @@
 
 **RULE Reference:** 1.2, 1.4.3(로깅)
 
+**참고:** Thymeleaf 뷰(마이페이지·About)는 제거됨. 웹 UI는 TASK_WEB(React)에서 담당.
+
 ---
 
 ## Step 15 — 관리자 회원 관리
@@ -773,6 +777,8 @@
 
 **RULE Reference:** 1.2, PRD 3.6, 1.4.2, 1.4.3(로깅)
 
+**참고:** Thymeleaf 화면(관리자 회원 관리)은 제거됨. 웹 UI는 TASK_WEB(React)에서 담당.
+
 ---
 
 ## Step 16 — 관리자 게시물 관리·공지
@@ -814,6 +820,8 @@
 **Duration:** 4일
 
 **RULE Reference:** 1.2, 1.4.3(로깅)
+
+**참고:** Thymeleaf 화면(관리자 게시물·공지)은 제거됨. 웹 UI는 TASK_WEB(React)에서 담당.
 
 ---
 
@@ -857,6 +865,8 @@
 **Duration:** 5일
 
 **RULE Reference:** 2.3, 1.4.3(로깅)
+
+**참고:** Thymeleaf 화면(통계 대시보드)은 제거됨. 웹 UI는 TASK_WEB(React)에서 담당.
 
 ---
 
@@ -1036,7 +1046,7 @@
 | 17   | 관리자 통계                            | ☑    |
 | 18   | 보안·CORS·Rate Limiting                | ☑    |
 | 19   | 테스트·문서·RULE 체크                  | ☑    |
-| 20   | 배포 설정·최종 점검                    | ☐    |
+| 20   | 배포 설정·최종 점검                    | ☑    |
 
 ---
 

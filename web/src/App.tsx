@@ -1,9 +1,15 @@
+import { Routes, Route } from 'react-router-dom';
+import HomePage from '@/pages/HomePage';
+import LoginPage from '@/pages/LoginPage';
+import SignupPage from '@/pages/SignupPage';
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-2xl font-bold text-gray-900">지도 기반 SNS</h1>
-      <p className="mt-2 text-gray-600">환영합니다.</p>
-    </div>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+    </Routes>
   );
 }
 
