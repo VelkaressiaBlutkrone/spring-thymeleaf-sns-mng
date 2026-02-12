@@ -73,6 +73,8 @@ temp/
 *.local.yml
 application-local.yml
 application-local.yaml
+run-dev.ps1
+run-dev.bat
 **/secrets/
 **/*.pem
 **/*.key

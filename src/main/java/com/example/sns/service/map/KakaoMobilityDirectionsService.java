@@ -62,6 +62,10 @@ public class KakaoMobilityDirectionsService {
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "KakaoAK " + apiKey);
             headers.set("Content-Type", "application/json");
+            // KA Header: 서버 호출 시 os 또는 origin 필수 (401 방지)
+            // os/javascript + origin: 웹앱에서의 호출로 간주
+            headers.set("KA", "sdk/1.0 os/javascript origin/http://localhost:5173");
+            headers.set("Origin", "http://localhost:5173");
 
             ResponseEntity<JsonNode> response = restTemplate.exchange(
                     url,
